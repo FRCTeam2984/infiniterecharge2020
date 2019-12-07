@@ -1,0 +1,7 @@
+pyfrc ~=  2019.1.0
+robotpy-ctre ~= 2019.3.1
+wpilib ~= 2019.2.3
+numpy
+
+black
+
