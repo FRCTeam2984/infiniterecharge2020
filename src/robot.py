@@ -38,7 +38,7 @@ class Robot(MagicRobot):
            actions"""
         try:
             throttle = -self.driver.getY()
-            rotation = self.driver.getZ()
+            rotation = -self.driver.getZ()
 
             self.chassis.setFromJoystick(throttle, rotation)
         except:

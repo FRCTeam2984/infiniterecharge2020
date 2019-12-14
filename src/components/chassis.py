@@ -58,6 +58,7 @@ class Chassis:
                 "Chassis has encountered a significant error, ceasing all operations."
             )
             return
+        logging.info(f"{self.gyro.getYaw()} and {self.gyro.getYawInRange()}")
         if self.mode == self._Mode.PercentOutput:
             self.dm_l.setOutput(self.signal_l)
             self.dm_r.setOutput(self.signal_r)
