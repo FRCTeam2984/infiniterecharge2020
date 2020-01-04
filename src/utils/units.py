@@ -1,5 +1,20 @@
 import numpy as np
 
+
+def angle_range(a: float):
+    while a < -np.pi:
+        a += 2 * np.pi
+    while a > np.pi:
+        a -= 2 * np.pi
+    return a
+
+def angle_diff(a: float, b: float):
+    a = angle_range(a)
+    b = angle_range(b)
+    diff = angle_range(a - b)
+    return diff
+
+
 cm_per_meter = 100
 meters_per_cm = 0.01
 

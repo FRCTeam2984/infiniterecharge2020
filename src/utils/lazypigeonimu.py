@@ -15,9 +15,6 @@ class LazyPigeonIMU(ctre.PigeonIMU):
 
     def getYawInRange(self) -> float:
         """Get the yaw in radians from -pi to pi."""
-        ret = self.getYawPitchRoll()[0] * units.radians_per_degree
-        while ret < -np.pi:
-            ret += 2 * np.pi
-        while ret > np.pi:
-            ret -= 2 * np.pi
-        return ret
+        yaw = self.getYawPitchRoll()[0] * units.radians_per_degree
+        return units.angle_range(yaw)
+

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import wpilib
 import ctre
@@ -6,7 +6,7 @@ from magicbot import MagicRobot
 from utils import lazytalonsrx, lazypigeonimu
 from components.chassis import Chassis
 import numpy as np
-
+import logging
 
 class Robot(MagicRobot):
     DS_L_ID = 2
@@ -37,10 +37,14 @@ class Robot(MagicRobot):
         """Place code here that does things as a result of operator
            actions"""
         try:
-            throttle = -self.driver.getY()
-            rotation = -self.driver.getZ()
-
-            self.chassis.setFromJoystick(throttle, rotation)
+            if self.driver.getRawButtonPressed(1):
+                logging.info("Button just pressed")
+                self.chassis.setDesiredAngle(3)
+            else:
+                if not self.chassis.mode == self.chassis._Mode.TurnToAngle:
+                    throttle = -self.driver.getY()
+                    rotation = -self.driver.getZ()
+                    self.chassis.setFromJoystick(throttle, rotation)
         except:
             self.onException()
 
