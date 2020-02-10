@@ -1,5 +1,5 @@
 # infinterecharge2020
-Vikings Robotics's code for InfinteRecharge 2019
+Vikings Robotics's code for InfiniteRecharge 2019
 
 # Basic setup
 1. Install python 3.5 or newer

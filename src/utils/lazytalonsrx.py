@@ -2,11 +2,10 @@ import logging
 
 import ctre
 from networktables import NetworkTables
-from enum import IntEnum
 import numpy as np
 
 
-class EncoderType(IntEnum):
+class EncoderType:
     Quad = ctre.FeedbackDevice.QuadEncoder
 
 
@@ -25,14 +24,16 @@ class EncoderConfig:
 
 
 CTREMag = EncoderConfig(EncoderType.Quad, 4096)
+FalconEncoder = EncoderConfig(EncoderType.Quad, 4096)
+TurretEncoder = EncoderConfig(EncoderType.Quad, 4096)
 
 
 class LazyTalonSRX(ctre.WPI_TalonSRX):
     """A wraper for the ctre.WPI_TalonSRX to simplfy configuration and getting/setting values."""
 
     MotorDash = NetworkTables.getTable("SmartDashboard").getSubTable("TalonSRX")
-    ControlMode = ctre.WPI_TalonSRX.ControlMode
-    DemandType = ctre.WPI_TalonSRX.DemandType
+    ControlMode = ctre.ControlMode
+    DemandType = ctre.DemandType
 
     def __init__(self, id: int):
         super().__init__(id)
@@ -59,12 +60,18 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
         self.config_kD(slot, kd, 0)
         self.config_kF(slot, kf, 0)
 
+    def setBreakMode(self):
+        self.setNeutralMode(self.NeutralMode.Brake)
+
+    def setCoastMode(self):
+        self.setNeutralMode(self.NeutralMode.Coast)
+
     def setMotionMagicConfig(self, vel: float, accel: float) -> None:
-        self.configMotionAcceleration(
-            int(accel * self.encoder_config.counts_per_radian), 0
-        )
         self.configMotionCruiseVelocity(
-            int(vel * self.encoder_config.counts_per_radian), 0
+            int(vel * self.encoder_config.counts_per_radian / 10), 0
+        )
+        self.configMotionAcceleration(
+            int(accel * self.encoder_config.counts_per_radian / 10), 0
         )
 
     def setOutput(self, signal: float, max_signal: float = 1) -> None:
@@ -140,7 +147,6 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
             return 0
 
     def outputToDashboard(self) -> None:
-        pass
         self.MotorDash.putNumber(
             f"{self.name} Percent Output", self.getMotorOutputPercent()
         )

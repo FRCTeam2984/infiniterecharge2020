@@ -1,50 +1,105 @@
 #!/usr/bin/env python
 
 import wpilib
-import ctre
 from magicbot import MagicRobot
-from utils import lazytalonsrx, lazypigeonimu
-from components.chassis import Chassis
-import numpy as np
-import logging
+from utils import lazytalonsrx, lazypigeonimu, pose
+from components import chassis, intake, tower, turret, shooter, vision
+import rev
+
 
 class Robot(MagicRobot):
-    DS_L_ID = 2
-    DM_L_ID = 3
-    DS_R_ID = 0
-    DM_R_ID = 1
+    DRIVE_SLAVE_LEFT_ID = 1
+    DRIVE_MASTER_LEFT_ID = 2
 
-    chassis: Chassis
+    DRIVE_SLAVE_RIGHT_ID = 3
+    DRIVE_MASTER_RIGHT_ID = 4
+
+    INTAKE_ID = 5
+
+    LOW_TOWER_ID = 6
+    HIGH_TOWER_ID = 7
+
+    TURRET_ID = 8
+    SHOOTER_LEFT_ID = 9
+    SHOOTER_RIGHT_ID = 10
+
+    CLIMB_WINCH_LEFT_ID = 11
+    CLIMB_WINCH_RIGHT_ID = 12
+
+    BUDDY_WINCH_LEFT_ID = 13
+    BUDDY_WINCH_RIGHT_ID = 14
+
+    TROLLEY_ARM_ID = 15
+    TROLLEY_ID = 16
+
+    chassis: chassis.Chassis
+    intake: intake.Intake
+    tower: tower.Tower
+    turret: turret.Turret
+    shooter: shooter.Shooter
+    vision: vision.Vision
 
     def createObjects(self):
         """Initialize all wpilib motors & sensors"""
-        self.ds_l = lazytalonsrx.LazyTalonSRX(self.DS_L_ID)
-        self.dm_l = lazytalonsrx.LazyTalonSRX(self.DM_L_ID)
-        self.dm_l.follow(self.ds_l)
+        self.drive_slave_left = lazytalonsrx.LazyTalonSRX(self.DRIVE_SLAVE_LEFT_ID)
+        self.drive_master_left = lazytalonsrx.LazyTalonSRX(self.DRIVE_MASTER_LEFT_ID)
+        self.drive_master_left.follow(self.drive_slave_left)
 
-        self.ds_r = lazytalonsrx.LazyTalonSRX(self.DS_R_ID)
-        self.dm_r = lazytalonsrx.LazyTalonSRX(self.DM_R_ID)
-        self.dm_r.follow(self.ds_r)
 
-        self.ds_r.setInverted(True)
-        self.dm_r.setInverted(True)
+        self.drive_slave_right = lazytalonsrx.LazyTalonSRX(self.DRIVE_SLAVE_RIGHT_ID)
+        self.drive_master_right = lazytalonsrx.LazyTalonSRX(self.DRIVE_MASTER_RIGHT_ID)
+        self.drive_master_right.follow(self.drive_slave_right)
+        self.drive_master_right.setInverted(True)
 
-        self.gyro = lazypigeonimu.LazyPigeonIMU(self.dm_r)
+        self.drive_master_left.setEncoderConfig(lazytalonsrx.FalconEncoder, False)
+        self.drive_master_right.setEncoderConfig(lazytalonsrx.FalconEncoder, False)
 
-        self.driver = wpilib.joystick.Joystick(0)
+        self.gyro = lazypigeonimu.LazyPigeonIMU(self.drive_master_right)
+
+        self.intake_motor = lazytalonsrx.LazyTalonSRX(self.INTAKE_ID)
+
+        self.low_tower_motor = lazytalonsrx.LazyTalonSRX(self.LOW_TOWER_ID)
+        self.high_tower_motor = lazytalonsrx.LazyTalonSRX(self.HIGH_TOWER_ID)
+
+        self.turret_motor = lazytalonsrx.LazyTalonSRX(self.TURRET_ID)
+        self.turret_motor.setEncoderConfig(lazytalonsrx.TurretEncoder, False)
+
+        self.shooter_motor_left = rev.CANSparkMax(
+            self.SHOOTER_LEFT_ID, rev.MotorType.kBrushless
+        )
+        self.shooter_motor_right = rev.CANSparkMax(
+            self.SHOOTER_RIGHT_ID, rev.MotorType.kBrushless
+        )
+        self.shooter_motor_right.follow(self.shooter_motor_left, True)
+
+        # self.trolley_arm = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ARM_ID)
+        # self.trolley_motor = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ID)
+
+        self.driver = wpilib.Joystick(0)
+        self.operator = wpilib.Joystick(1)
+
+        self.global_pose = pose.Pose(0, 0, 0)
 
     def teleopPeriodic(self):
         """Place code here that does things as a result of operator
            actions"""
         try:
-            if self.driver.getRawButtonPressed(1):
-                logging.info("Button just pressed")
-                self.chassis.setDesiredAngle(3)
-            else:
-                if not self.chassis.mode == self.chassis._Mode.TurnToAngle:
-                    throttle = -self.driver.getY()
-                    rotation = -self.driver.getZ()
-                    self.chassis.setFromJoystick(throttle, rotation)
+            throttle = -self.driver.getY()
+            rotation = -self.driver.getZ()
+            self.chassis.setFromJoystick(throttle, rotation)
+            self.turret.trackTarget()
+            # if self.operator.getRawButtonPressed(5):
+            #     self.intake.intake()
+            # if self.operator.getRawButtonPressed(6):
+            #     self.intake.outtake()
+            # if self.operator.getRawButton(0):
+            #     if not self.turret.tracking_target:
+            #         self.turret.trackTarget()
+            #     else:
+            #         self.turret.stop()
+
+            # if self.operator.getRawButton(3):
+            #     self.shooter.stop()
         except:
             self.onException()
 

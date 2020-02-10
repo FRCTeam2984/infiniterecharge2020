@@ -8,6 +8,7 @@ def angle_range(a: float):
         a -= 2 * np.pi
     return a
 
+
 def angle_diff(a: float, b: float):
     a = angle_range(a)
     b = angle_range(b)
