@@ -8,9 +8,11 @@ import ctre
 
 class Tower:
 
+    # speeds at which to run motors
     LOW_TOWER_SPEED = 0.5
     HIGH_TOWER_SPEED = 0.5
 
+    # required devices
     low_tower_motor: lazytalonsrx.LazyTalonSRX
     high_tower_motor: lazytalonsrx.LazyTalonSRX
 
@@ -21,18 +23,33 @@ class Tower:
     def on_enable(self):
         pass
 
+    def on_disable(self):
+        self.stop()
 
-    def startIndexing(self):
+    def index(self) -> None:
+        """Start indexing balls."""
         self.is_indexing = True
 
-    def stopIndexing(self):
+    def stop(self) -> None:
+        """Stop indexing balls."""
         self.is_indexing = False
 
-    def hasBall(self, index: int):
+    def hasBall(self, index: int) -> bool:
+        """Does the tower have a ball at the given index."""
         return self.ball_count[index]
+
+    def isFullyLoaded(self) -> bool:
+        """Are 4 balls in the tower."""
+        return all(self.ball_count)
 
     def execute(self):
         # TODO handle tower
+        if self.is_indexing:
+            self.low_tower_motor.setOutput(self.LOW_TOWER_SPEED)
+            self.high_tower_motor.setOutput(self.HIGH_TOWER_SPEED)
+        else:
+            self.low_tower_motor.setOutput(0.0)
+            self.high_tower_motor.setOutput(0.0)
         # TODO track_balls
         if False:  # trigger 0
             self.ball_count[0] = True
