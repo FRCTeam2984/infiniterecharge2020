@@ -1,7 +1,8 @@
 import numpy as np
 
 
-def angle_range(a: float):
+def angle_range(a: float) -> float:
+    """Return an angle within the range [-pi, pi]."""
     while a < -np.pi:
         a += 2 * np.pi
     while a > np.pi:
@@ -9,7 +10,8 @@ def angle_range(a: float):
     return a
 
 
-def angle_diff(a: float, b: float):
+def angle_diff(a: float, b: float) -> float:
+    """Get the shortest distance between 2 angles."""
     a = angle_range(a)
     b = angle_range(b)
     diff = angle_range(a - b)

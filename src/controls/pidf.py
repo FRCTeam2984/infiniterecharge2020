@@ -6,14 +6,14 @@ class PIDF:
 
     def __init__(
         self,
-        setpoint=0,
-        kp=0,
-        ki=0,
-        kd=0,
-        kf=0,
-        continuous=False,
-        min_in=-100,
-        max_in=100,
+        setpoint=0: float,
+        kp=0: float,
+        ki=0: float,
+        kd=0: float,
+        kf=0: float,
+        continuous=False: bool,
+        min_in=-1: float,
+        max_in=1: float,
     ):
         self.kp = kp
         self.ki = ki
@@ -36,7 +36,7 @@ class PIDF:
         self.min_out = np.NINF
         self.max_out = np.Inf
 
-    def update(self, input, dt):
+    def update(self, input: float, dt: float) -> float:
         """Update the PIDF controller."""
         if dt < 1e-6:
             dt = 1e-6
@@ -58,18 +58,20 @@ class PIDF:
             + (self.kd * self.derivative)
             + (self.kf * self.setpoint)
         )
-        self.output = np.clip(output,self.min_out, self.max_out)
+        self.output = np.clip(output, self.min_out, self.max_out)
         return self.output
 
-    def setSetpoint(self, setpoint: float):
+    def setSetpoint(self, setpoint: float) -> None:
+        """Set the desired setpoint."""
         self.reset()
         self.setpoint = setpoint
 
-    def setOutputRange(self, min_out: float, max_out: float):
+    def setOutputRange(self, min_out: float, max_out: float) -> None:
+        """Set the min and max outputs of the controller."""
         self.min_out = min_out
         self.max_out = max_out
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset control values."""
         self.last_error = 0
         self.cur_error = 0
