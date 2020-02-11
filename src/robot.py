@@ -45,7 +45,6 @@ class Robot(MagicRobot):
         self.drive_master_left = lazytalonsrx.LazyTalonSRX(self.DRIVE_MASTER_LEFT_ID)
         self.drive_master_left.follow(self.drive_slave_left)
 
-
         self.drive_slave_right = lazytalonsrx.LazyTalonSRX(self.DRIVE_SLAVE_RIGHT_ID)
         self.drive_master_right = lazytalonsrx.LazyTalonSRX(self.DRIVE_MASTER_RIGHT_ID)
         self.drive_master_right.follow(self.drive_slave_right)
@@ -72,8 +71,8 @@ class Robot(MagicRobot):
         )
         self.shooter_motor_right.follow(self.shooter_motor_left, True)
 
-        # self.trolley_arm = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ARM_ID)
-        # self.trolley_motor = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ID)
+        self.trolley_arm = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ARM_ID)
+        self.trolley_motor = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ID)
 
         self.driver = wpilib.Joystick(0)
         self.operator = wpilib.Joystick(1)
@@ -84,22 +83,47 @@ class Robot(MagicRobot):
         """Place code here that does things as a result of operator
            actions"""
         try:
-            throttle = -self.driver.getY()
-            rotation = -self.driver.getZ()
-            self.chassis.setFromJoystick(throttle, rotation)
-            self.turret.trackTarget()
-            # if self.operator.getRawButtonPressed(5):
-            #     self.intake.intake()
-            # if self.operator.getRawButtonPressed(6):
-            #     self.intake.outtake()
-            # if self.operator.getRawButton(0):
-            #     if not self.turret.tracking_target:
-            #         self.turret.trackTarget()
-            #     else:
-            #         self.turret.stop()
+            # driver joystick control of chassis
+            if self.chassis.mode != self.chassis._Mode.Vision:
+                throttle = -self.driver.getY()
+                rotation = -self.driver.getZ()
+                self.chassis.setFromJoystick(throttle, rotation)
 
-            # if self.operator.getRawButton(3):
-            #     self.shooter.stop()
+            # driver control of chassis target tracking
+            if self.driver.getRawButtonPressed(0):
+                if self.chassis.mode == self.chassis._Mode.Vision:
+                    self.chassis.stop()
+                else:
+                    self.chassis.trackTarget()
+
+            # operator control of turret target tracking
+            if self.operator.getRawButtonPressed(0):
+                if self.turret.is_tracking_target:
+                    self.turret.stop()
+                else:
+                    self.turret.trackTarget()
+
+            # operator control of intake
+            if self.operator.getRawButtonPressed(5):
+                if self.intake.is_intaking:
+                    self.intake.stop()
+                else:
+                    self.intake.intake()
+
+            # operator control of tower indexing
+            if self.operator.getRawButtonPressed(6):
+                if self.tower.is_indexing:
+                    self.tower.stop()
+                elif not self.tower.isFullyLoaded():
+                    self.tower.index()
+
+            # operator control of shooter spinning
+            if self.operator.getRawButton(7):
+                if self.shooter.is_shooting:
+                    self.shooter.stop()
+                else:
+                    self.shooter.shoot()
+
         except:
             self.onException()
 
