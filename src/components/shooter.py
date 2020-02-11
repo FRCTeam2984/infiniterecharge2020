@@ -3,18 +3,20 @@ from enum import Enum
 import rev
 from utils import units
 import numpy as np
-from magicbot import tunable
+from magicbot import tunable, feedback
 
 
 class Shooter:
 
-    SHOOT_SPEED = 4000
 
+    # shooter physical constants
     WHEEL_RADIUS = 2 * units.meters_per_inch
     WHEEL_CIRCUMFERENCE = 2 * np.pi * WHEEL_RADIUS
-    # RPM_PER_MPS = 60 / WHEEL_CIRCUMFERENCE
-    # MPS_PER_RPM = WHEEL_CIRCUMFERENCE / 60
 
+    # speed to shoot balls
+    SHOOT_SPEED = 4000
+
+    # shooter pidf gains
     SHOOTER_KP = tunable(0)
     SHOOTER_KI = tunable(0)
     SHOOTER_KD = tunable(0)
@@ -23,6 +25,7 @@ class Shooter:
     # percent of setpoint
     RPM_TOLERANCE = 0.05
 
+    # required devices
     shooter_motor_left: rev.CANSparkMax
 
     def __init__(self):
@@ -41,6 +44,9 @@ class Shooter:
     def on_enable(self):
         pass
 
+    def on_disable(self):
+        self.stop()
+
     def shoot(self) -> None:
         """Start spinning the shooter."""
         self.is_shooting = True
@@ -51,13 +57,22 @@ class Shooter:
         self.is_shooting = False
         self.rpm = 0
 
-    def isAtSetpoint(self):
+    def isAtSetpoint(self) -> bool:
+        """Is the shooter at the desired speed."""
         return abs(self.rpm - self.encoder.getVelocity()) <= (
             self.rpm * self.RPM_TOLERANCE
         )
 
-    def isReady(self):
+    def isReady(self) -> bool:
+        """Is the shooter ready for a ball."""
         return self.isAtSetpoint()
 
+    @feedback
+    def is_ready(self):
+        return self.isReady()
+
     def execute(self):
-        self.shooter_pid.setReference(self.rpm, rev.ControlType.kVelocity)
+        if self.is_shooting:
+            self.shooter_pid.setReference(self.rpm, rev.ControlType.kVelocity)
+        else:
+            self.shooter_motor_left.set(0.0)
