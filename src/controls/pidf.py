@@ -6,14 +6,14 @@ class PIDF:
 
     def __init__(
         self,
-        setpoint=0: float,
-        kp=0: float,
-        ki=0: float,
-        kd=0: float,
-        kf=0: float,
-        continuous=False: bool,
-        min_in=-1: float,
-        max_in=1: float,
+        setpoint: float = 0,
+        kp: float = 0,
+        ki: float = 0,
+        kd: float = 0,
+        kf: float = 0,
+        continuous: bool = False,
+        min_in: float = -np.pi,
+        max_in: float = np.pi,
     ):
         self.kp = kp
         self.ki = ki

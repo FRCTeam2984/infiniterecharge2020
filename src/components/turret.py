@@ -12,7 +12,7 @@ from magicbot import tunable, feedback
 class Turret:
 
     # turret physical constants
-    GEAR_RATIO = 10
+    GEAR_RATIO = 462
     INPUT_RADS_PER_OUTPUT_RAD = GEAR_RATIO
     OUTPUT_RADS_PER_INPUT_RAD = 1 / GEAR_RATIO
 
