@@ -5,9 +5,9 @@ read -n1 -p "Press any key to confirm in virtual environment..."
 echo
 pip install robotpy-installer
 robotpy-installer download-robotpy
-robotpy-installer download-opkg python37-robotpy-cscore python37-robotpy-ctre python37-robotpy-rev
+robotpy-installer download-opkg python38-robotpy-ctre python38-robotpy-rev python38-numpy
 
 read -n1 -p "Press any key once connected to the robot..."
 echo
 robotpy-installer install-robotpy
-robotpy-installer install-opkg python37-robotpy-cscore python37-robotpy-ctre python37-robotpy-rev
+robotpy-installer install-opkg python38-robotpy-ctre python38-robotpy-rev python38-numpy
