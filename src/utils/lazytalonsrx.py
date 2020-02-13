@@ -1,12 +1,12 @@
 import logging
 
 import ctre
-from networktables import NetworkTables
 import numpy as np
 
 
 class EncoderType:
     Quad = ctre.FeedbackDevice.QuadEncoder
+    Integrated = ctre.FeedbackDevice.IntegratedSensor
 
 
 class EncoderConfig:
@@ -24,14 +24,13 @@ class EncoderConfig:
 
 
 CTREMag = EncoderConfig(EncoderType.Quad, 4096)
-FalconEncoder = EncoderConfig(EncoderType.Quad, 4096)
+FalconEncoder = EncoderConfig(EncoderType.Integrated, 2048)
 TurretEncoder = EncoderConfig(EncoderType.Quad, 4096)
 
 
 class LazyTalonSRX(ctre.WPI_TalonSRX):
     """A wraper for the ctre.WPI_TalonSRX to simplfy configuration and getting/setting values."""
 
-    MotorDash = NetworkTables.getTable("SmartDashboard").getSubTable("TalonSRX")
     ControlMode = ctre.ControlMode
     DemandType = ctre.DemandType
 
@@ -145,20 +144,6 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
         else:
             logging.warning(self.no_closed_loop_warning)
             return 0
-
-    def outputToDashboard(self) -> None:
-        self.MotorDash.putNumber(
-            f"{self.name} Percent Output", self.getMotorOutputPercent()
-        )
-        if self.encoder:
-            self.MotorDash.putNumber(f"{self.name} Position", self.getPosition())
-            if self._isClosedLoop():
-                self.MotorDash.putNumber(
-                    f"{self.name} PIDF Target", self.getClosedLoopTarget(0)
-                )
-                self.MotorDash.putNumber(
-                    f"{self.name} PIDF Error", self.getClosedLoopError(0)
-                )
 
     def _isClosedLoop(self) -> bool:
         return self.getControlMode() in (

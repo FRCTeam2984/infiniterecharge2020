@@ -34,3 +34,11 @@ class LazyPigeonIMU(ctre.PigeonIMU):
     def getPitchInRange(self) -> float:
         """Get the pitch in radians from -pi to pi."""
         return self._getRotationInRange(1)
+
+    def getRoll(self) -> float:
+        """Get the roll in radians."""
+        return self._getRotation(2)
+
+    def getRollInRange(self) -> float:
+        """Get the roll in radians from -pi to pi."""
+        return self._getRotationInRange(2)

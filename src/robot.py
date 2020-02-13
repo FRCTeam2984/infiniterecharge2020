@@ -2,7 +2,7 @@
 
 import wpilib
 from magicbot import MagicRobot
-from utils import lazytalonsrx, lazypigeonimu, pose
+from utils import lazytalonsrx, lazypigeonimu, pose, periodicio
 from components import chassis, intake, tower, turret, shooter, vision
 import rev
 
@@ -10,7 +10,6 @@ import rev
 class Robot(MagicRobot):
     DRIVE_SLAVE_LEFT_ID = 1
     DRIVE_MASTER_LEFT_ID = 2
-
     DRIVE_SLAVE_RIGHT_ID = 3
     DRIVE_MASTER_RIGHT_ID = 4
 
@@ -41,20 +40,33 @@ class Robot(MagicRobot):
 
     def createObjects(self):
         """Initialize all wpilib motors & sensors"""
+        # setup master and slave drive motors
         self.drive_slave_left = lazytalonsrx.LazyTalonSRX(self.DRIVE_SLAVE_LEFT_ID)
         self.drive_master_left = lazytalonsrx.LazyTalonSRX(self.DRIVE_MASTER_LEFT_ID)
         self.drive_master_left.follow(self.drive_slave_left)
+        self.drive_master_left.setInverted(True)
 
         self.drive_slave_right = lazytalonsrx.LazyTalonSRX(self.DRIVE_SLAVE_RIGHT_ID)
         self.drive_master_right = lazytalonsrx.LazyTalonSRX(self.DRIVE_MASTER_RIGHT_ID)
         self.drive_master_right.follow(self.drive_slave_right)
-        self.drive_master_right.setInverted(True)
 
+        # setup drive encoders
         self.drive_master_left.setEncoderConfig(lazytalonsrx.FalconEncoder, False)
         self.drive_master_right.setEncoderConfig(lazytalonsrx.FalconEncoder, False)
 
-        self.gyro = lazypigeonimu.LazyPigeonIMU(self.drive_master_right)
+        # drive motor characterizations
+        self.drive_characterization_left = wpilib.controller.SimpleMotorFeedforwardMeters(
+            chassis.Chassis.DRIVE_KS,
+            chassis.Chassis.DRIVE_KV,
+            chassis.Chassis.DRIVE_KA,
+        )
+        self.drive_characterization_right = wpilib.controller.SimpleMotorFeedforwardMeters(
+            chassis.Chassis.DRIVE_KS,
+            chassis.Chassis.DRIVE_KV,
+            chassis.Chassis.DRIVE_KA,
+        )
 
+        # setup actuator motors
         self.intake_motor = lazytalonsrx.LazyTalonSRX(self.INTAKE_ID)
 
         self.low_tower_motor = lazytalonsrx.LazyTalonSRX(self.LOW_TOWER_ID)
@@ -74,10 +86,12 @@ class Robot(MagicRobot):
         self.trolley_arm = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ARM_ID)
         self.trolley_motor = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ID)
 
+        # setup imu
+        self.imu = lazypigeonimu.LazyPigeonIMU(self.intake_motor)
+
+        # setup joysticks
         self.driver = wpilib.Joystick(0)
         self.operator = wpilib.Joystick(1)
-
-        self.global_pose = pose.Pose(0, 0, 0)
 
     def teleopPeriodic(self):
         """Place code here that does things as a result of operator
@@ -85,44 +99,44 @@ class Robot(MagicRobot):
         try:
             # driver joystick control of chassis
             if self.chassis.mode != self.chassis._Mode.Vision:
-                throttle = -self.driver.getY()
-                rotation = -self.driver.getZ()
+                throttle = self.driver.getY()
+                rotation = self.driver.getZ()
                 self.chassis.setFromJoystick(throttle, rotation)
 
             # driver control of chassis target tracking
-            if self.driver.getRawButtonPressed(0):
-                if self.chassis.mode == self.chassis._Mode.Vision:
-                    self.chassis.stop()
-                else:
-                    self.chassis.trackTarget()
+            # if self.driver.getRawButtonPressed(0):
+            #     if self.chassis.mode == self.chassis._Mode.Vision:
+            #         self.chassis.stop()
+            #     else:
+            #         self.chassis.trackTarget()
 
-            # operator control of turret target tracking
-            if self.operator.getRawButtonPressed(0):
-                if self.turret.is_tracking_target:
-                    self.turret.stop()
-                else:
-                    self.turret.trackTarget()
+            # # operator control of turret target tracking
+            # if self.operator.getRawButtonPressed(0):
+            #     if self.turret.is_tracking_target:
+            #         self.turret.stop()
+            #     else:
+            #         self.turret.trackTarget()
 
-            # operator control of intake
-            if self.operator.getRawButtonPressed(5):
-                if self.intake.is_intaking:
-                    self.intake.stop()
-                else:
-                    self.intake.intake()
+            # # operator control of intake
+            # if self.operator.getRawButtonPressed(5):
+            #     if self.intake.is_intaking:
+            #         self.intake.stop()
+            #     else:
+            #         self.intake.intake()
 
-            # operator control of tower indexing
-            if self.operator.getRawButtonPressed(6):
-                if self.tower.is_indexing:
-                    self.tower.stop()
-                elif not self.tower.isFullyLoaded():
-                    self.tower.index()
+            # # operator control of tower indexing
+            # if self.operator.getRawButtonPressed(6):
+            #     if self.tower.is_indexing:
+            #         self.tower.stop()
+            #     elif not self.tower.isFullyLoaded():
+            #         self.tower.index()
 
-            # operator control of shooter spinning
-            if self.operator.getRawButton(7):
-                if self.shooter.is_shooting:
-                    self.shooter.stop()
-                else:
-                    self.shooter.shoot()
+            # # operator control of shooter spinning
+            # if self.operator.getRawButton(7):
+            #     if self.shooter.is_shooting:
+            #         self.shooter.stop()
+            #     else:
+            #         self.shooter.shoot()
 
         except:
             self.onException()
