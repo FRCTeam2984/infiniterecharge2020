@@ -7,17 +7,34 @@ from controls import pidf
 import wpilib
 from components import vision
 from magicbot import tunable, feedback
+from networktables import NetworkTables
 
 
 class Turret:
 
-    # turret physical constants
-    GEAR_RATIO = 462
-    INPUT_RADS_PER_OUTPUT_RAD = GEAR_RATIO
-    OUTPUT_RADS_PER_INPUT_RAD = 1 / GEAR_RATIO
+    # physical constants
+    GEAR_RATIO = 1
+    INPUT_PER_OUTPUT = GEAR_RATIO
+    OUTPUT_PER_INPUT = 1 / GEAR_RATIO
 
-    SOFT_MIN = -45 * units.radians_per_degree
-    SOFT_MAX = 45 * units.radians_per_degree
+    SOFT_MIN = -85 * units.radians_per_degree
+    SOFT_MAX = 85 * units.radians_per_degree
+
+    # motor config
+    TIMEOUT = lazytalonsrx.LazyTalonSRX.TIMEOUT
+    INVERTED = False
+    STATUS_FRAME = 10
+
+    CLOSED_LOOP_RAMP = 0.5
+    OPEN_LOOP_RAMP = 0.5
+    PEAK_CURRENT = 50
+    PEAK_CURRENT_DURATION = 1000
+    CONTINUOUS_CURRENT = 25
+
+    # motor coefs
+    TURRET_KS = 0  # V
+    TURRET_KV = 0  # V / (rad / s)
+    TURRET_KA = 0  # V / (rad / s^2)
 
     # motion magic pidf gains
     TURRET_KP = tunable(0)
@@ -26,11 +43,11 @@ class Turret:
     TURRET_KF = tunable(0)
 
     # motion magic config values
-    TURRET_MOTION_MAGIC_VELOCITY = (
-        90 * units.radians_per_degree * INPUT_RADS_PER_OUTPUT_RAD
+    TURRET_MOTION_MAGIC_VELOCITY = tunable(
+        30 * units.radians_per_degree * INPUT_PER_OUTPUT
     )
-    TURRET_MOTION_MAGIC_ACCEL = (
-        45 * units.radians_per_degree * INPUT_RADS_PER_OUTPUT_RAD
+    TURRET_MOTION_MAGIC_ACCEL = tunable(
+        30 * units.radians_per_degree * INPUT_PER_OUTPUT
     )
 
     # tolerance to setpoint error
@@ -44,8 +61,30 @@ class Turret:
 
     def __init__(self):
         self.is_tracking_target = False
+        self.output = 0
+        self.nt = NetworkTables.getTable(
+            f"/components/{self.__class__.__name__.lower()}"
+        )
 
     def setup(self):
+        # self.turret_motor.setStatusFramePeriod(
+        #     lazytalonsrx.LazyTalonSRX.StatusFrame.Status_2_Feedback0,
+        #     self.STATUS_FRAME,
+        #     self.TIMEOUT,
+        # )
+
+        self.turret_motor.configOpenloopRamp(self.OPEN_LOOP_RAMP, self.TIMEOUT)
+        self.turret_motor.configClosedloopRamp(self.CLOSED_LOOP_RAMP, self.TIMEOUT)
+
+        self.turret_motor.enableCurrentLimit(True)
+        self.turret_motor.configPeakCurrentLimit(self.PEAK_CURRENT, self.TIMEOUT)
+        self.turret_motor.configPeakCurrentDuration(
+            self.PEAK_CURRENT_DURATION, self.TIMEOUT
+        )
+        self.turret_motor.configContinuousCurrentLimit(
+            self.CONTINUOUS_CURRENT, self.TIMEOUT
+        )
+
         self.turret_motor.setPIDF(
             0, self.TURRET_KP, self.TURRET_KI, self.TURRET_KD, self.TURRET_KF
         )
@@ -74,8 +113,8 @@ class Turret:
         self.is_tracking_target = False
 
     def getVisionTargetHeading(self) -> float:
-        """Get the heading the turret should be at to be centered on the vision target."""
-        cur_heading = self.turret_motor.getPosition() * self.OUTPUT_RADS_PER_INPUT_RAD
+        """Get the heading of the target relative to the turret"""
+        cur_heading = self.turret_motor.getPosition() * self.OUTPUT_PER_INPUT
         new_heading = cur_heading + self.vision.getHeading()
         return new_heading
 
@@ -85,7 +124,7 @@ class Turret:
 
     def isWithinSoftLimits(self) -> bool:
         """Is the turret heading within the soft limits."""
-        heading = self.turret_motor.getPosition() * self.OUTPUT_RADS_PER_INPUT_RAD
+        heading = self.getHeadingInRange()
         return self._isWithinSoftLimits(heading)
 
     def isAtVisionTarget(self) -> bool:
@@ -102,30 +141,33 @@ class Turret:
 
     def _setHeading(self, heading: float) -> float:
         """Set the heading of the turret."""
-        heading *= self.INPUT_RADS_PER_OUTPUT_RAD
+        heading *= self.INPUT_PER_OUTPUT
         if self._isWithinSoftLimits(heading):
-            self.turret_motor.setPosition(heading)
+            self.turret_motor.setMotionMagicPosition(heading)
         else:
             logging.warning(
                 f"Trying to set turret at {heading} which is outside of soft limits"
             )
 
-    @feedback
-    def get_heading(self):
-        return self.turret_motor.getPosition() * self.OUTPUT_RADS_PER_INPUT_RAD
+    def getHeadingInRange(self):
+        return units.angle_range(self.turret_motor.getPosition())
 
-    @feedback
-    def get_vision_target_heading(self):
-        return self.getVisionTargetHeading()
-
-    @feedback
-    def get_is_tracking_target(self):
-        return self.is_tracking_target
+    def updateNetworkTables(self):
+        self.nt.putValue(
+            "heading_in_range", self.getHeadingInRange() * units.degrees_per_radian
+        )
+        self.nt.putValue(
+            "heading",
+            self.turret_motor.getPosition()
+            * self.OUTPUT_PER_INPUT
+            * units.degrees_per_radian,
+        )
+        self.nt.putValue("tracking_target", self.is_tracking_target)
 
     def execute(self):
         if self.is_tracking_target:
-            # vision_heading = self.getVisionTargetHeading()
-            # self._setHeading(vision_heading)
-            self.turret_motor.setOutput(0.5)
+            vision_heading = self.getVisionTargetHeading()
+            self._setHeading(vision_heading)
         else:
             self.turret_motor.setOutput(0)
+        self.updateNetworkTables()
