@@ -3,32 +3,9 @@ import logging
 import ctre
 import numpy as np
 
-class EncoderType:
-    Quad = ctre.FeedbackDevice.QuadEncoder
-    Integrated = ctre.FeedbackDevice.IntegratedSensor
-    CTREMag = ctre.FeedbackDevice.CTRE_MagEncoder_Relative
 
-
-class EncoderConfig:
-    def __init__(self, _type: EncoderType, cpr: int):
-        self.type = _type
-        self.cpr = cpr
-
-    @property
-    def radians_per_count(self):
-        return (2 * np.pi) / self.cpr
-
-    @property
-    def counts_per_radian(self):
-        return self.cpr / (2 * np.pi)
-
-
-CTREMag = EncoderConfig(EncoderType.CTREMag, 4096)
-FalconEncoder = EncoderConfig(EncoderType.Integrated, 2048)
-
-
-class LazyTalonSRX(ctre.WPI_TalonSRX):
-    """A wraper for the ctre.WPI_TalonSRX to simplfy configuration and getting/setting values."""
+class LazyTalonFX(ctre.WPI_TalonFX):
+    """A wraper for the ctre.WPI_TalonFX to simplfy configuration and getting/setting values."""
 
     TIMEOUT = 10
 
@@ -36,23 +13,32 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
     DemandType = ctre.DemandType
     StatusFrame = ctre.StatusFrameEnhanced
 
+    COUNTS_PER_RAD = 2048 / (2 * np.pi)
+    RADS_PER_COUNT = 2 * np.pi / 2048
 
     def __init__(self, id: int):
         super().__init__(id)
 
     def initialize(self, name: str = None) -> None:
         """Initialize the motors (enable the encoder, set invert status, set voltage limits)."""
-        self.encoder = False
         if name != None:
             self.setName(name)
-        self.no_encoder_warning = f"No encoder connected to {self.name}"
+        self.configSelectedFeedbackSensor(
+            ctre.TalonFXFeedbackDevice.IntegratedSensor, 0, self.TIMEOUT
+        )
         self.no_closed_loop_warning = f"{self.name} not in closed loop mode"
 
-    def setEncoderConfig(self, config: EncoderConfig, phase: bool) -> None:
-        self.encoder = True
-        self.encoder_config = config
-        self.configSelectedFeedbackSensor(config.type, 0, self.TIMEOUT)
-        self.setSensorPhase(phase)
+    def setSupplyCurrentLimit(self, current_limit, trigger_current, trigger_time):
+        limits = ctre.SupplyCurrentLimitConfiguration(
+            True, current_limit, trigger_current, trigger_time
+        )
+        self.configSupplyCurrentLimit(limits, self.TIMEOUT)
+
+    def setStatorCurrentLimit(self, current_limit, trigger_current, trigger_time):
+        limits = ctre.StatorCurrentLimitConfiguration(
+            True, current_limit, trigger_current, trigger_time
+        )
+        self.configStatorCurrentLimit(limits, self.TIMEOUT)
 
     def setPIDF(self, slot: int, kp: float, ki: float, kd: float, kf: float) -> None:
         """Initialize the PIDF controller."""
@@ -70,10 +56,10 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
 
     def setMotionMagicConfig(self, vel: float, accel: float) -> None:
         self.configMotionCruiseVelocity(
-            int(vel * self.encoder_config.counts_per_radian / 10), self.TIMEOUT
+            int(vel * self.COUNTS_PER_RAD / 10), self.TIMEOUT
         )
         self.configMotionAcceleration(
-            int(accel * self.encoder_config.counts_per_radian / 10), self.TIMEOUT
+            int(accel * self.COUNTS_PER_RAD / 10), self.TIMEOUT
         )
 
     def setOutput(self, signal: float, max_signal: float = 1) -> None:
@@ -83,54 +69,32 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
 
     def setPosition(self, pos: float) -> None:
         """Set the position of the motor."""
-        self.set(self.ControlMode.Position, pos * self.encoder_config.counts_per_radian)
+        self.set(self.ControlMode.Position, pos * self.COUNTS_PER_RAD)
 
     def setVelocity(self, vel: float, ff: float = 0) -> None:
         """Set the velocity of the motor."""
         self.set(
             self.ControlMode.Velocity,
-            vel * self.encoder_config.counts_per_radian / 10,
+            vel * self.COUNTS_PER_RAD / 10,
             self.DemandType.ArbitraryFeedForward,
             ff,
         )
 
     def setMotionMagicPosition(self, pos: float) -> None:
         """Set the position of the motor using motion magic."""
-        self.set(
-            self.ControlMode.MotionMagic, pos * self.encoder_config.counts_per_radian
-        )
+        self.set(self.ControlMode.MotionMagic, pos * self.COUNTS_PER_RAD)
 
     def zero(self, pos: int = 0) -> None:
         """Zero the encoder if it exists."""
-        if self.encoder:
-            self.setSelectedSensorPosition(
-                int(pos * self.encoder_config.counts_per_radian), 0, self.TIMEOUT
-            )
-        else:
-            logging.warning(self.no_encoder_warning)
+        self.setSelectedSensorPosition(pos * self.COUNTS_PER_RAD, 0, self.TIMEOUT)
 
     def getPosition(self) -> int:
         """Get the encoder position if it exists."""
-        if self.encoder:
-            return (
-                self.getSelectedSensorPosition(0)
-                * self.encoder_config.radians_per_count
-            )
-        else:
-            logging.warning(self.no_encoder_warning)
-            return 0
+        return self.getSelectedSensorPosition(0) * self.RADS_PER_COUNT
 
     def getVelocity(self) -> int:
         """Get the encoder velocity if it exists."""
-        if self.encoder:
-            return (
-                self.getSelectedSensorVelocity(0)
-                * self.encoder_config.radians_per_count
-                * 10
-            )
-        else:
-            logging.warning(self.no_encoder_warning)
-            return 0
+        return self.getSelectedSensorVelocity(0) * self.RADS_PER_COUNT * 10
 
     def getError(self) -> int:
         """Get the closed loop error if in closed loop mode."""

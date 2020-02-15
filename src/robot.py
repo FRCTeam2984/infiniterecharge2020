@@ -2,7 +2,7 @@
 
 import wpilib
 from magicbot import MagicRobot
-from utils import lazytalonsrx, lazypigeonimu, pose, periodicio
+from utils import lazytalonsrx, lazypigeonimu, pose, lazytalonfx
 from components import chassis, intake, tower, turret, shooter, vision
 import rev
 
@@ -41,30 +41,14 @@ class Robot(MagicRobot):
     def createObjects(self):
         """Initialize all wpilib motors & sensors"""
         # setup master and slave drive motors
-        self.drive_slave_left = lazytalonsrx.LazyTalonSRX(self.DRIVE_SLAVE_LEFT_ID)
-        self.drive_master_left = lazytalonsrx.LazyTalonSRX(self.DRIVE_MASTER_LEFT_ID)
+        self.drive_slave_left = lazytalonfx.LazyTalonFX(self.DRIVE_SLAVE_LEFT_ID)
+        self.drive_master_left = lazytalonfx.LazyTalonFX(self.DRIVE_MASTER_LEFT_ID)
         self.drive_master_left.follow(self.drive_slave_left)
-        self.drive_master_left.setInverted(True)
 
-        self.drive_slave_right = lazytalonsrx.LazyTalonSRX(self.DRIVE_SLAVE_RIGHT_ID)
-        self.drive_master_right = lazytalonsrx.LazyTalonSRX(self.DRIVE_MASTER_RIGHT_ID)
+
+        self.drive_slave_right = lazytalonfx.LazyTalonFX(self.DRIVE_SLAVE_RIGHT_ID)
+        self.drive_master_right = lazytalonfx.LazyTalonFX(self.DRIVE_MASTER_RIGHT_ID)
         self.drive_master_right.follow(self.drive_slave_right)
-
-        # setup drive encoders
-        self.drive_master_left.setEncoderConfig(lazytalonsrx.FalconEncoder, False)
-        self.drive_master_right.setEncoderConfig(lazytalonsrx.FalconEncoder, False)
-
-        # drive motor characterizations
-        self.drive_characterization_left = wpilib.controller.SimpleMotorFeedforwardMeters(
-            chassis.Chassis.DRIVE_KS,
-            chassis.Chassis.DRIVE_KV,
-            chassis.Chassis.DRIVE_KA,
-        )
-        self.drive_characterization_right = wpilib.controller.SimpleMotorFeedforwardMeters(
-            chassis.Chassis.DRIVE_KS,
-            chassis.Chassis.DRIVE_KV,
-            chassis.Chassis.DRIVE_KA,
-        )
 
         # setup actuator motors
         self.intake_motor = lazytalonsrx.LazyTalonSRX(self.INTAKE_ID)
@@ -73,7 +57,7 @@ class Robot(MagicRobot):
         self.high_tower_motor = lazytalonsrx.LazyTalonSRX(self.HIGH_TOWER_ID)
 
         self.turret_motor = lazytalonsrx.LazyTalonSRX(self.TURRET_ID)
-        self.turret_motor.setEncoderConfig(lazytalonsrx.TurretEncoder, False)
+        self.turret_motor.setEncoderConfig(lazytalonsrx.CTREMag, True)
 
         self.shooter_motor_left = rev.CANSparkMax(
             self.SHOOTER_LEFT_ID, rev.MotorType.kBrushless
@@ -98,11 +82,11 @@ class Robot(MagicRobot):
            actions"""
         try:
             # driver joystick control of chassis
-            if self.chassis.mode != self.chassis._Mode.Vision:
-                throttle = self.driver.getY()
-                rotation = self.driver.getZ()
-                self.chassis.setFromJoystick(throttle, rotation)
-
+            # if self.chassis.mode != self.chassis._Mode.Vision:
+            #     throttle = self.driver.getY()
+            #     rotation = self.driver.getZ()
+            #     self.chassis.setFromJoystick(throttle, rotation)
+            # self.chassis.setVelocity(0,0)
             # driver control of chassis target tracking
             # if self.driver.getRawButtonPressed(0):
             #     if self.chassis.mode == self.chassis._Mode.Vision:
@@ -111,12 +95,13 @@ class Robot(MagicRobot):
             #         self.chassis.trackTarget()
 
             # # operator control of turret target tracking
-            # if self.operator.getRawButtonPressed(0):
-            #     if self.turret.is_tracking_target:
-            #         self.turret.stop()
-            #     else:
-            #         self.turret.trackTarget()
-
+            if self.operator.getRawButtonPressed(1):
+                if self.turret.is_tracking_target:
+                    self.turret.stop()
+                else:
+                    self.turret.trackTarget()
+            if self.operator.getRawButtonPressed(2):
+                self.turret_motor.zero()
             # # operator control of intake
             # if self.operator.getRawButtonPressed(5):
             #     if self.intake.is_intaking:
