@@ -86,15 +86,15 @@ class Robot(MagicRobot):
             #     throttle = self.driver.getY()
             #     rotation = self.driver.getZ()
             #     self.chassis.setFromJoystick(throttle, rotation)
-            # self.chassis.setVelocity(0,0)
+
             # driver control of chassis target tracking
-            # if self.driver.getRawButtonPressed(0):
+            # if self.driver.getRawButtonPressed(1):
             #     if self.chassis.mode == self.chassis._Mode.Vision:
             #         self.chassis.stop()
             #     else:
             #         self.chassis.trackTarget()
 
-            # # operator control of turret target tracking
+            # operator control of turret target tracking
             if self.operator.getRawButtonPressed(1):
                 if self.turret.is_tracking_target:
                     self.turret.stop()
@@ -102,26 +102,7 @@ class Robot(MagicRobot):
                     self.turret.trackTarget()
             if self.operator.getRawButtonPressed(2):
                 self.turret_motor.zero()
-            # # operator control of intake
-            # if self.operator.getRawButtonPressed(5):
-            #     if self.intake.is_intaking:
-            #         self.intake.stop()
-            #     else:
-            #         self.intake.intake()
 
-            # # operator control of tower indexing
-            # if self.operator.getRawButtonPressed(6):
-            #     if self.tower.is_indexing:
-            #         self.tower.stop()
-            #     elif not self.tower.isFullyLoaded():
-            #         self.tower.index()
-
-            # # operator control of shooter spinning
-            # if self.operator.getRawButton(7):
-            #     if self.shooter.is_shooting:
-            #         self.shooter.stop()
-            #     else:
-            #         self.shooter.shoot()
 
         except:
             self.onException()
