@@ -17,7 +17,7 @@ class Tower:
     high_tower_motor: lazytalonsrx.LazyTalonSRX
 
     def __init__(self):
-        self.is_indexing = False
+        self.is_lifting = False
         self.ball_count = [False, False, False, False]
 
     def on_enable(self):
@@ -26,13 +26,13 @@ class Tower:
     def on_disable(self):
         self.stop()
 
-    def index(self) -> None:
-        """Start indexing balls."""
-        self.is_indexing = True
+    def lift(self) -> None:
+        """Start lifting up balls."""
+        self.is_lifting = True
 
     def stop(self) -> None:
-        """Stop indexing balls."""
-        self.is_indexing = False
+        """Stop lifting balls."""
+        self.is_lifting = False
 
     def hasBall(self, index: int) -> bool:
         """Does the tower have a ball at the given index."""
@@ -44,7 +44,7 @@ class Tower:
 
     def execute(self):
         # TODO handle tower
-        if self.is_indexing:
+        if self.is_lifting:
             self.low_tower_motor.setOutput(self.LOW_TOWER_SPEED)
             self.high_tower_motor.setOutput(self.HIGH_TOWER_SPEED)
         else:

@@ -8,8 +8,8 @@ from wpilib import Timer
 
 class Shooter(StateMachine):
 
-    DISTANCES = (0, 3.5) # m
-    RPMS = (0, 3500)
+    DISTANCES = (3.5,) # m
+    RPMS = (3500,)
 
     chassis: chassis.Chassis
     tower: tower.Tower
@@ -40,7 +40,7 @@ class Shooter(StateMachine):
             self.next_state("success")
         if initial_call:
             self.balls_shot += 1
-            self.tower.index()
+            self.tower.lift()
         if not self.isReadyToShoot():
             self.tower.stop()
             self.next_state("alignTurretAndSpinFlywheel")
