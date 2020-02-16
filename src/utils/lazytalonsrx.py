@@ -100,7 +100,7 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
             self.ControlMode.MotionMagic, pos * self.encoder_config.counts_per_radian
         )
 
-    def zero(self, pos: int = 0) -> None:
+    def zero(self, pos: float = 0) -> None:
         """Zero the encoder if it exists."""
         if self.encoder:
             self.setSelectedSensorPosition(

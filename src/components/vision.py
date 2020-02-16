@@ -10,7 +10,7 @@ class Vision:
 
     # field and robot measurements
     TARGET_HEIGHT = 90 * units.meters_per_inch
-    CAMERA_HEIGHT = 30 * units.meters_per_inch
+    CAMERA_HEIGHT = 36.75 * units.meters_per_inch
     CAMERA_PITCH = 0 * units.radians_per_degree
 
     # desired setpoints and tolerances
@@ -28,17 +28,20 @@ class Vision:
     def on_enable(self):
         pass
 
+    def hasTarget(self) -> bool:
+        return not np.isnan(self.getHeading())
+
     def getHeading(self) -> float:
         """Get the yaw offset to the target."""
         heading = (
-            self.limelight.getNumber("tx", float("nan")) * units.radians_per_degree
+            self.limelight.getNumber("tx", np.nan) * units.radians_per_degree
         )
         return heading
 
     def getPitch(self) -> float:
         """Get the pitch offset to the target."""
         pitch_offset = (
-            self.limelight.getNumber("ty", float("nan")) * units.radians_per_degree
+            self.limelight.getNumber("ty", np.nan) * units.radians_per_degree
         )
         return self.CAMERA_PITCH + pitch_offset
 

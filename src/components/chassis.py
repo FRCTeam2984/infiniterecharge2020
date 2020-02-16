@@ -101,7 +101,6 @@ class Chassis:
 
         self.desired_output = drivesignal.DriveSignal()
         self.desired_velocity = drivesignal.DriveSignal()
-        self.prev_desired_velocity = drivesignal.DriveSignal()
         self.desired_acceleration = drivesignal.DriveSignal()
         self.feedforward = drivesignal.DriveSignal()
         self.prev_time = 0
@@ -226,15 +225,15 @@ class Chassis:
         """Stop all motor output."""
         self.mode = self._Mode.Idle
 
-    # def setBreakMode(self) -> None:
-    #     """Set the motors to break mode."""
-    #     self.drive_master_left.setBreakMode()
-    #     self.drive_master_right.setBreakMode()
+    def setBreakMode(self) -> None:
+        """Set the motors to break mode."""
+        self.drive_master_left.setBreakMode()
+        self.drive_master_right.setBreakMode()
 
-    # def setCoastMode(self) -> None:
-    #     """Set the motors to coast mode."""
-    #     self.drive_master_left.setCoastMode()
-    #     self.drive_master_right.setCoastMode()
+    def setCoastMode(self) -> None:
+        """Set the motors to coast mode."""
+        self.drive_master_left.setCoastMode()
+        self.drive_master_right.setCoastMode()
 
     def _computeFF(self) -> drivesignal.DriveSignal:
         self.feedforward.left = (
@@ -346,8 +345,6 @@ class Chassis:
                 self.feedforward.right,
             )
         self.prev_time = cur_time
-        self.prev_desired_velocity.left = self.desired_velocity.left
-        self.prev_desired_velocity.right = self.desired_velocity.right
 
         self.prev_wheel_position.left = self.wheel_position.left
         self.prev_wheel_position.right = self.wheel_position.right
