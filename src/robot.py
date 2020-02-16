@@ -2,8 +2,8 @@
 
 import wpilib
 from magicbot import MagicRobot
-from utils import lazytalonsrx, lazypigeonimu, pose, lazytalonfx
-from components import chassis, intake, tower, turret, shooter, vision
+from utils import lazytalonsrx, lazypigeonimu, pose, lazytalonfx, units
+from components import chassis, intake, tower, turret, flywheel, vision
 import rev
 
 
@@ -19,8 +19,8 @@ class Robot(MagicRobot):
     HIGH_TOWER_ID = 7
 
     TURRET_ID = 8
-    SHOOTER_LEFT_ID = 9
-    SHOOTER_RIGHT_ID = 10
+    FLYWHEEL_LEFT_ID = 9
+    FLYWHEEL_RIGHT_ID = 10
 
     CLIMB_WINCH_LEFT_ID = 11
     CLIMB_WINCH_RIGHT_ID = 12
@@ -28,14 +28,14 @@ class Robot(MagicRobot):
     BUDDY_WINCH_LEFT_ID = 13
     BUDDY_WINCH_RIGHT_ID = 14
 
-    TROLLEY_ARM_ID = 15
+    CLIMB_ARM_ID = 15
     TROLLEY_ID = 16
 
     chassis: chassis.Chassis
     intake: intake.Intake
     tower: tower.Tower
     turret: turret.Turret
-    shooter: shooter.Shooter
+    flywheel: flywheel.Flywheel
     vision: vision.Vision
 
     def createObjects(self):
@@ -59,15 +59,15 @@ class Robot(MagicRobot):
         self.turret_motor = lazytalonsrx.LazyTalonSRX(self.TURRET_ID)
         self.turret_motor.setEncoderConfig(lazytalonsrx.CTREMag, True)
 
-        self.shooter_motor_left = rev.CANSparkMax(
-            self.SHOOTER_LEFT_ID, rev.MotorType.kBrushless
+        self.flywheel_motor_left = rev.CANSparkMax(
+            self.FLYWHEEL_LEFT_ID, rev.MotorType.kBrushless
         )
-        self.shooter_motor_right = rev.CANSparkMax(
-            self.SHOOTER_RIGHT_ID, rev.MotorType.kBrushless
-        )
-        self.shooter_motor_right.follow(self.shooter_motor_left, True)
+        # self.flywheel_motor_right = rev.CANSparkMax(
+        #     self.FLYWHEEL_RIGHT_ID, rev.MotorType.kBrushless
+        # )
+        # self.flywheel_motor_right.follow(self.flywheel_motor_left, True)
 
-        self.trolley_arm = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ARM_ID)
+        self.climb_arm = lazytalonsrx.LazyTalonSRX(self.CLIMB_ARM_ID)
         self.trolley_motor = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ID)
 
         # setup imu
@@ -96,12 +96,18 @@ class Robot(MagicRobot):
 
             # operator control of turret target tracking
             if self.operator.getRawButtonPressed(1):
-                if self.turret.is_tracking_target:
+                if self.turret.isSlewing():
                     self.turret.stop()
                 else:
-                    self.turret.trackTarget()
-            if self.operator.getRawButtonPressed(2):
-                self.turret_motor.zero()
+                    self.turret.searchForTarget()
+
+            # if self.operator.getRawButtonPressed(2):
+            #     self.turret_motor.zero()
+            # if self.operator.getRawButtonPressed(3):
+            #     if self.flywheel.is_spinning:
+            #         self.flywheel.stop()
+            #     else:
+            #         self.flywheel.setRPM(3500)
 
 
         except:
