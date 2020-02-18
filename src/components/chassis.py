@@ -144,7 +144,6 @@ class Chassis:
             self.VELOCITY_RIGHT_KD,
             self.VELOCITY_RIGHT_KF,
         )
-
     def setup(self):
         self.drive_master_left.setInverted(self.LEFT_INVERTED)
         self.drive_master_right.setInverted(self.RIGHT_INVERTED)
@@ -181,6 +180,9 @@ class Chassis:
 
     def on_disable(self):
         self.stop()
+
+    def isAligning(self):
+        return self.mode == self._Mode.Vision
 
     def setOutput(self, output_l: float, output_r: float) -> None:
         """Set the output of the motors."""

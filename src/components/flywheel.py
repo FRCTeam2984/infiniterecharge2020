@@ -12,10 +12,11 @@ class Flywheel:
 
     # motor config
     INVERTED = True
+    
     # motor coefs
     FLYWHEEL_KS = 0.0574  # V
-    FLYWHEEL_KV = 0.131  # V / (rpm)
-    FLYWHEEL_KA = 0.0612  # V / (rpm / s)
+    FLYWHEEL_KV = 0.131  # V / (rps)
+    FLYWHEEL_KA = 0.0612  # V / (rps / s)
 
     # flywheel pidf gains
     FLYWHEEL_KP = tunable(0)
@@ -26,7 +27,7 @@ class Flywheel:
 
     # percent of setpoint
     RPM_TOLERANCE = 0.05
-    DESIRED_RPM = tunable(0)
+
     # required devices
     flywheel_motor_left: rev.CANSparkMax
 

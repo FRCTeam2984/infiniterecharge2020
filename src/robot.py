@@ -3,7 +3,7 @@
 import wpilib
 from magicbot import MagicRobot
 from utils import lazytalonsrx, lazypigeonimu, lazytalonfx, units
-from components import chassis, intake, tower, turret, flywheel, vision
+from components import chassis, intake, tower, turret, flywheel, vision, leds
 import rev
 import numpy as np
 from statemachines import shooter
@@ -39,6 +39,7 @@ class Robot(MagicRobot):
     flywheel: flywheel.Flywheel
     vision: vision.Vision
     shooter: shooter.Shooter
+    leds: leds.LED
 
     def createObjects(self):
         """Initialize all wpilib motors & sensors"""
@@ -76,7 +77,7 @@ class Robot(MagicRobot):
         self.imu = lazypigeonimu.LazyPigeonIMU(self.intake_motor)
         
         # setup leds
-        # self.led = wpilib.AddressableLED(0)
+        self.led = wpilib.AddressableLED(0)
         
         # setup joysticks
         self.driver = wpilib.Joystick(0)
@@ -98,7 +99,7 @@ class Robot(MagicRobot):
                 else:
                     self.flywheel.setRPM(0)
 
-            
+            self.leds.test()
             #################
             # real controls #
             #################

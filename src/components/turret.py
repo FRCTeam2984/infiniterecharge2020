@@ -17,8 +17,8 @@ class Turret:
     INPUT_PER_OUTPUT = GEAR_RATIO
     OUTPUT_PER_INPUT = 1 / GEAR_RATIO
 
-    SOFT_MIN = -30 * units.radians_per_degree
-    SOFT_MAX = 30 * units.radians_per_degree
+    SOFT_MIN = -45 * units.radians_per_degree
+    SOFT_MAX = 45 * units.radians_per_degree
 
     # motor config
     TIMEOUT = lazytalonsrx.LazyTalonSRX.TIMEOUT
@@ -107,10 +107,13 @@ class Turret:
 
     def on_disable(self):
         self.stop()
-
+    def isTrackingTarget(self) -> bool:
+        return self.mode == self._Mode.TrackingTarget
+    def isSearching(self) -> bool:
+        return self.mode == self._Mode.Searching
     def isSlewing(self) -> bool:
         return (
-            self.mode == self._Mode.Searching or self.mode == self._Mode.TrackingTarget
+            self.isTrackingTarget() or self.isSearching()
         )
 
     def stop(self) -> None:
@@ -216,10 +219,7 @@ class Turret:
         elif self.mode == self._Mode.TrackingTarget:
             if self.vision.hasTarget():
                 # if a vision target is found, move to it
-                if self.isReady():
-                    self.turret_motor.set(0)
-                else:
-                    self._setRelativeHeading(-self.vision.getHeading())
+                self._setRelativeHeading(-self.vision.getHeading())
             else:
                 # if no vision target is found, search for one
                 self.mode = self._Mode.Searching
