@@ -35,6 +35,7 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
     ControlMode = ctre.ControlMode
     DemandType = ctre.DemandType
     StatusFrame = ctre.StatusFrameEnhanced
+    NeutralMode = ctre.NeutralMode
 
 
     def __init__(self, id: int):
@@ -61,6 +62,10 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
         self.config_kI(slot, ki, self.TIMEOUT)
         self.config_kD(slot, kd, self.TIMEOUT)
         self.config_kF(slot, kf, self.TIMEOUT)
+
+    def setIZone(self, slot: int, izone: float) -> None:
+        """Set the izone of the PIDF controller."""
+        self.config_IntegralZone(slot, int(izone * self.encoder_config.counts_per_radian),self.TIMEOUT)
 
     def setBreakMode(self):
         self.setNeutralMode(self.NeutralMode.Brake)

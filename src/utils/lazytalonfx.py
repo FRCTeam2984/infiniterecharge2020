@@ -12,6 +12,7 @@ class LazyTalonFX(ctre.WPI_TalonFX):
     ControlMode = ctre.ControlMode
     DemandType = ctre.DemandType
     StatusFrame = ctre.StatusFrameEnhanced
+    NeutralMode = ctre.NeutralMode
 
     COUNTS_PER_RAD = 2048 / (2 * np.pi)
     RADS_PER_COUNT = 2 * np.pi / 2048
@@ -47,6 +48,10 @@ class LazyTalonFX(ctre.WPI_TalonFX):
         self.config_kI(slot, ki, self.TIMEOUT)
         self.config_kD(slot, kd, self.TIMEOUT)
         self.config_kF(slot, kf, self.TIMEOUT)
+
+    def setIZone(self, slot: int, izone: float) -> None:
+        """Set the izone of the PIDF controller."""
+        self.config_IntegralZone(slot, int(izone * self.COUNTS_PER_RAD),self.TIMEOUT)
 
     def setBreakMode(self):
         self.setNeutralMode(self.NeutralMode.Brake)
