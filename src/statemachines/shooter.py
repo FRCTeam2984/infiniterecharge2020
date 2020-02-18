@@ -1,15 +1,18 @@
 from magicbot.state_machine import StateMachine, state, timed_state
 from controls import pidf
 from components import vision, chassis, flywheel, tower, turret
-from utils import lazypigeonimu, units, pose
+from utils import lazypigeonimu, units
 import numpy as np
 from wpilib import Timer
+from networktables import NetworkTables
 
 
 class Shooter(StateMachine):
 
-    DISTANCES = (3.5,) # m
-    RPMS = (3500,)
+    DISTANCES = (
+        np.array((6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)) * units.meters_per_inch
+    )
+    RPMS = np.array((2475, 2475, 2350, 2250, 2275, 2300, 2260, 2300, 2320, 2330, 2335))
 
     chassis: chassis.Chassis
     tower: tower.Tower
@@ -18,8 +21,13 @@ class Shooter(StateMachine):
     vision: vision.Vision
 
     def setup(self):
-        self.balls_shot = 0
         self.chassis.setBreakMode()
+        self.balls_shot = 0
+        self.desired_rpm = 0
+        self.nt = NetworkTables.getTable("/components/shooter")
+
+    def shoot(self):
+        self.engage()
 
     def isReadyToShoot(self):
         return self.turret.isReady() and self.flywheel.isReady()
@@ -27,17 +35,20 @@ class Shooter(StateMachine):
     @state(first=True)
     def alignTurretAndSpinFlywheel(self, initial_call):
         if self.balls_shot == 4:
-            self.next_state("success")
+            self.done()
         if initial_call:
             self.turret.trackTarget()
-            self.flywheel.setRPM(self.RPMS[1]) # np.interp(self.vision.getDistance(), self.DISTANCES, self.RPMS)
+        self.desired_rpm = np.interp(
+            self.vision.getDistance(), self.DISTANCES, self.RPMS
+        )
+        self.flywheel.setRPM(self.desired_rpm)
         if self.turret.isReady() and self.flywheel.isReady():
             self.next_state("feedBalls")
 
     @state()
     def feedBalls(self, initial_call):
         if self.balls_shot == 4:
-            self.next_state("success")
+            self.done()
         if initial_call:
             self.balls_shot += 1
             self.tower.lift()
@@ -46,7 +57,8 @@ class Shooter(StateMachine):
             self.next_state("alignTurretAndSpinFlywheel")
 
     @state()
-    def success(self):
+    def done(self):
+        super.done()
         self.chassis.setCoastMode()
         self.tower.stop()
         self.turret.stop()
