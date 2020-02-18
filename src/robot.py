@@ -2,11 +2,11 @@
 
 import wpilib
 from magicbot import MagicRobot
-from utils import lazytalonsrx, lazypigeonimu, lazytalonfx, units
+from utils import lazypigeonimu, lazytalonfx, lazytalonsrx
 from components import chassis, intake, tower, turret, flywheel, vision, leds
 import rev
-import numpy as np
 from statemachines import shooter
+
 
 class Robot(MagicRobot):
     DRIVE_SLAVE_LEFT_ID = 1
@@ -48,7 +48,6 @@ class Robot(MagicRobot):
         self.drive_master_left = lazytalonfx.LazyTalonFX(self.DRIVE_MASTER_LEFT_ID)
         self.drive_master_left.follow(self.drive_slave_left)
 
-
         self.drive_slave_right = lazytalonfx.LazyTalonFX(self.DRIVE_SLAVE_RIGHT_ID)
         self.drive_master_right = lazytalonfx.LazyTalonFX(self.DRIVE_MASTER_RIGHT_ID)
         self.drive_master_right.follow(self.drive_slave_right)
@@ -75,10 +74,10 @@ class Robot(MagicRobot):
 
         # setup imu
         self.imu = lazypigeonimu.LazyPigeonIMU(self.intake_motor)
-        
+
         # setup leds
         self.led = wpilib.AddressableLED(0)
-        
+
         # setup joysticks
         self.driver = wpilib.Joystick(0)
         self.operator = wpilib.Joystick(1)
@@ -86,7 +85,7 @@ class Robot(MagicRobot):
     def teleopPeriodic(self):
         """Place code here that does things as a result of operator
            actions"""
-        try:    
+        try:
             # TODO remove temp controls
             if self.operator.getRawButtonPressed(1):
                 if self.turret.isSlewing():
@@ -130,7 +129,6 @@ class Robot(MagicRobot):
             #         self.indexer.stop()
             #     else:
             #         self.indexer.index()
-
 
         except:
             self.onException()

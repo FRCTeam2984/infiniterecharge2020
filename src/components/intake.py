@@ -1,5 +1,3 @@
-import logging
-
 from utils import lazytalonsrx
 
 
@@ -16,7 +14,7 @@ class Intake:
 
     def on_enable(self):
         pass
-    
+
     def on_disable(self):
         self.stop()
 

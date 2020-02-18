@@ -1,9 +1,8 @@
-import logging
-from enum import Enum
 from components import chassis, vision, turret, flywheel
 
 import wpilib
 import numpy as np
+
 
 class LED:
 
@@ -45,12 +44,13 @@ class LED:
 
     def on_enable(self):
         self.led.start()
+
     def test(self):
         pass
 
     def _getStripeData(self, rgb, index, stripe_length, length):
         data = [rgb] * stripe_length + [self.COLOR_OFF] * (length - stripe_length)
-        return np.roll(data,index).tolist()
+        return np.roll(data, index).tolist()
 
     def _getData(self, rgb, length):
         return [rgb] * length
@@ -65,20 +65,30 @@ class LED:
             self.new_time = self.time
             self.blink = not self.blink
 
-        if self.turret.isSearching():  
-            self.turret_data = self._getStripeData(self.COLOR_BLUE,self.stripe_index[1],self.STRIPE_LENGTH_TURRET,self.LENGTH_TURRET)
+        if self.turret.isSearching():
+            self.turret_data = self._getStripeData(
+                self.COLOR_BLUE,
+                self.stripe_index[1],
+                self.STRIPE_LENGTH_TURRET,
+                self.LENGTH_TURRET,
+            )
         elif self.turret.isTrackingTarget():
-            self.turret_data = self._getData(self.COLOR_BLUE if self.blink else self.COLOR_OFF , self.LENGTH_TURRET)
-        elif self.turret.isReady():  
+            self.turret_data = self._getData(
+                self.COLOR_BLUE if self.blink else self.COLOR_OFF, self.LENGTH_TURRET
+            )
+        elif self.turret.isReady():
             self.turret_data = self._getData(self.COLOR_BLUE, self.LENGTH_TURRET)
-        else:  
+        else:
             self.turret_data = self._getData(self.COLOR_OFF, self.LENGTH_TURRET)
 
         if self.flywheel.is_spinning:
             if self.flywheel.isReady():
                 self.flywheel_data = self._getData(self.COLOR_RED, self.LENGTH_FLYWHEEL)
             else:
-                self.flywheel_data = self._getData(self.COLOR_RED if self.blink else self.COLOR_OFF , self.LENGTH_FLYWHEEL)
+                self.flywheel_data = self._getData(
+                    self.COLOR_RED if self.blink else self.COLOR_OFF,
+                    self.LENGTH_FLYWHEEL,
+                )
         else:
             self.flywheel_data = self._getData(self.COLOR_OFF, self.LENGTH_FLYWHEEL)
 
@@ -86,7 +96,10 @@ class LED:
             if self.vision.isChassisReady():
                 self.chassis_data = self._getData(self.COLOR_GREEN, self.LENGTH_CHASSIS)
             else:
-                self.chassis_data = self._getData(self.COLOR_GREEN if self.blink else self.COLOR_OFF , self.LENGTH_CHASSIS)
+                self.chassis_data = self._getData(
+                    self.COLOR_GREEN if self.blink else self.COLOR_OFF,
+                    self.LENGTH_CHASSIS,
+                )
         else:
             self.chassis_data = self._getData(self.COLOR_OFF, self.LENGTH_CHASSIS)
 

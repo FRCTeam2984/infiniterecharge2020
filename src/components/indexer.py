@@ -1,5 +1,3 @@
-import logging
-
 from components import intake, tower
 
 

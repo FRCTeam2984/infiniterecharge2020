@@ -1,9 +1,5 @@
-import logging
-from enum import Enum
 import rev
-from utils import units
-import numpy as np
-from magicbot import tunable, feedback
+from magicbot import tunable
 from wpilib import controller
 from networktables import NetworkTables
 
@@ -12,7 +8,7 @@ class Flywheel:
 
     # motor config
     INVERTED = True
-    
+
     # motor coefs
     FLYWHEEL_KS = 0.0574  # V
     FLYWHEEL_KV = 0.131  # V / (rps)

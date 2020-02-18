@@ -51,7 +51,7 @@ class LazyTalonFX(ctre.WPI_TalonFX):
 
     def setIZone(self, slot: int, izone: float) -> None:
         """Set the izone of the PIDF controller."""
-        self.config_IntegralZone(slot, int(izone * self.COUNTS_PER_RAD),self.TIMEOUT)
+        self.config_IntegralZone(slot, int(izone * self.COUNTS_PER_RAD), self.TIMEOUT)
 
     def setBreakMode(self):
         self.setNeutralMode(self.NeutralMode.Brake)

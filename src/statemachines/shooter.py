@@ -1,9 +1,7 @@
-from magicbot.state_machine import StateMachine, state, timed_state
-from controls import pidf
+from magicbot.state_machine import StateMachine, state
 from components import vision, chassis, flywheel, tower, turret
-from utils import lazypigeonimu, units
+from utils import units
 import numpy as np
-from wpilib import Timer
 from networktables import NetworkTables
 
 

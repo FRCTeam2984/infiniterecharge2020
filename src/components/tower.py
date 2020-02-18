@@ -1,9 +1,4 @@
-import logging
-from enum import Enum
-import rev
-from utils import units, lazytalonsrx
-import numpy as np
-import ctre
+from utils import lazytalonsrx
 
 
 class Tower:

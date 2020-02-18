@@ -1,9 +1,6 @@
-import logging
-from enum import Enum
 from networktables import NetworkTables
 from utils import units
 import numpy as np
-from magicbot import feedback
 
 
 class Vision:

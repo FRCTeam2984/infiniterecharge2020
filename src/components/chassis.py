@@ -1,6 +1,4 @@
-import logging
 from wpilib import Timer, controller
-from magicbot import tunable, feedback
 from enum import Enum
 from utils import (
     lazypigeonimu,
@@ -144,6 +142,7 @@ class Chassis:
             self.VELOCITY_RIGHT_KD,
             self.VELOCITY_RIGHT_KF,
         )
+
     def setup(self):
         self.drive_master_left.setInverted(self.LEFT_INVERTED)
         self.drive_master_right.setInverted(self.RIGHT_INVERTED)

@@ -1,12 +1,8 @@
 import logging
 from enum import Enum
-import rev
 from utils import units, lazytalonsrx
-import numpy as np
-from controls import pidf
-import wpilib
 from components import vision
-from magicbot import tunable, feedback
+from magicbot import tunable
 from networktables import NetworkTables
 
 
@@ -107,14 +103,15 @@ class Turret:
 
     def on_disable(self):
         self.stop()
+
     def isTrackingTarget(self) -> bool:
         return self.mode == self._Mode.TrackingTarget
+
     def isSearching(self) -> bool:
         return self.mode == self._Mode.Searching
+
     def isSlewing(self) -> bool:
-        return (
-            self.isTrackingTarget() or self.isSearching()
-        )
+        return self.isTrackingTarget() or self.isSearching()
 
     def stop(self) -> None:
         """Stop the turret."""

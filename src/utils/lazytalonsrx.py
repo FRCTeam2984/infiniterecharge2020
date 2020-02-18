@@ -3,6 +3,7 @@ import logging
 import ctre
 import numpy as np
 
+
 class EncoderType:
     Quad = ctre.FeedbackDevice.QuadEncoder
     Integrated = ctre.FeedbackDevice.IntegratedSensor
@@ -37,7 +38,6 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
     StatusFrame = ctre.StatusFrameEnhanced
     NeutralMode = ctre.NeutralMode
 
-
     def __init__(self, id: int):
         super().__init__(id)
         self.no_encoder_warning = f"No encoder connected to Talon {id}"
@@ -48,7 +48,7 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
         self.encoder = False
         if name != None:
             self.setName(name)
- 
+
     def setEncoderConfig(self, config: EncoderConfig, phase: bool) -> None:
         self.encoder = True
         self.encoder_config = config
@@ -65,7 +65,9 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
 
     def setIZone(self, slot: int, izone: float) -> None:
         """Set the izone of the PIDF controller."""
-        self.config_IntegralZone(slot, int(izone * self.encoder_config.counts_per_radian),self.TIMEOUT)
+        self.config_IntegralZone(
+            slot, int(izone * self.encoder_config.counts_per_radian), self.TIMEOUT
+        )
 
     def setBreakMode(self):
         self.setNeutralMode(self.NeutralMode.Brake)
