@@ -6,7 +6,6 @@ from utils import (
     lazypigeonimu,
     lazytalonfx,
     units,
-    pose,
     drivesignal,
     wheelstate,
 )
