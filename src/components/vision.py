@@ -1,7 +1,7 @@
 import logging
 from enum import Enum
 from networktables import NetworkTables
-from utils import units, pose
+from utils import units
 import numpy as np
 from magicbot import feedback
 
@@ -11,7 +11,9 @@ class Vision:
     # field and robot measurements
     TARGET_HEIGHT = 90 * units.meters_per_inch
     CAMERA_HEIGHT = 36.75 * units.meters_per_inch
-    CAMERA_PITCH = 0 * units.radians_per_degree
+    CAMERA_PITCH = (
+        -1.65 * units.radians_per_degree
+    )  # empirically calculated: ty - atan((TARGET_HEIGHT - CAMERA_HEIGHT) / distance)
 
     # desired setpoints and tolerances
     DISTANCE_DESIRED = 192 * units.meters_per_inch
@@ -25,31 +27,38 @@ class Vision:
     def __init__(self):
         self.limelight = NetworkTables.getTable("limelight")
 
+    def setup(self):
+        self.nt = NetworkTables.getTable(
+            f"/components/{self.__class__.__name__.lower()}"
+        )
+
     def on_enable(self):
         pass
 
+    def enableLED(self, value: bool):
+        """Toggle the limelight LEDs on or off."""
+        mode = 3 if value else 1
+        self.nt.putNumber("ledMode", mode)
+
     def hasTarget(self) -> bool:
-        return not np.isnan(self.getHeading())
+        """Has the limelight found a valid target."""
+        return self.limelight.getNumber("tv", 0) == 1
 
     def getHeading(self) -> float:
         """Get the yaw offset to the target."""
-        heading = (
-            self.limelight.getNumber("tx", np.nan) * units.radians_per_degree
-        )
+        heading = self.limelight.getNumber("tx", np.nan) * units.radians_per_degree
         return heading
 
     def getPitch(self) -> float:
         """Get the pitch offset to the target."""
-        pitch_offset = (
-            self.limelight.getNumber("ty", np.nan) * units.radians_per_degree
-        )
+        pitch_offset = self.limelight.getNumber("ty", np.nan) * units.radians_per_degree
         return self.CAMERA_PITCH + pitch_offset
 
     def getDistance(self) -> float:
         """Get the distance offset to the target."""
         pitch = self.getPitch()
-        dist = (self.TARGET_HEIGHT - self.CAMERA_HEIGHT) / np.tan(pitch)
-        return dist
+        distance = (self.TARGET_HEIGHT - self.CAMERA_HEIGHT) / np.tan(pitch)
+        return distance
 
     def getHeadingError(self) -> float:
         """Get the error in the heading from the desired heading."""
@@ -99,25 +108,11 @@ class Vision:
         """Is the entire robot ready to shoot balls."""
         return self.isChassisReady() and self.isTurretReady()
 
-    @feedback
-    def get_pitch(self):
-        return self.getPitch() * units.degrees_per_radian
-
-    @feedback
-    def get_heading(self):
-        return self.getHeading() * units.degrees_per_radian
-
-    @feedback
-    def get_distance(self):
-        return self.getDistance() * units.inches_per_meter
-
-    @feedback
-    def is_chassis_ready(self):
-        return self.isChassisReady()
-
-    @feedback
-    def is_turret_ready(self):
-        return self.isTurretReady()
+    def updateNetworkTables(self):
+        self.nt.putValue("heading", self.getHeading() * units.degrees_per_radian)
+        self.nt.putValue("distance", self.getDistance() * units.inches_per_meter)
+        self.nt.putValue("pitch", self.getPitch() * units.degrees_per_radian)
+        self.nt.putValue("has_target", self.hasTarget())
 
     def execute(self):
-        pass
+        self.updateNetworkTables()
