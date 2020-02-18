@@ -8,7 +8,7 @@ from networktables import NetworkTables
 class Shooter(StateMachine):
 
     DISTANCES = (
-        np.array((6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)) * units.meters_per_inch
+        np.array((6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)) * units.meters_per_foot
     )
     RPMS = np.array((2475, 2475, 2350, 2250, 2275, 2300, 2260, 2300, 2320, 2330, 2335))
 

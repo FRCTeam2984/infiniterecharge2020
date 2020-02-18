@@ -92,13 +92,21 @@ class Robot(MagicRobot):
                     self.turret.stop()
                 else:
                     self.turret.searchForTarget()
+
+            DISTANCES = (
+                np.array((6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)) * units.meters_per_foot
+            )
+            RPMS = np.array((2475, 2475, 2350, 2250, 2275, 2300, 2260, 2300, 2320, 2330, 2335))
+            desired_rpm = np.interp(
+                self.vision.getDistance(), DISTANCES, RPMS
+            )
+
             if self.operator.getRawButtonPressed(2):
                 if self.flywheel.is_spinning:
                     self.flywheel.stop()
                 else:
-                    self.flywheel.setRPM(0)
+                    self.flywheel.setRPM(desired_rpm)
 
-            self.leds.test()
             #################
             # real controls #
             #################
