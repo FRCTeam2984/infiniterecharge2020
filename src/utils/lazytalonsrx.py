@@ -40,15 +40,15 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
 
     def __init__(self, id: int):
         super().__init__(id)
+        self.no_encoder_warning = f"No encoder connected to Talon {id}"
+        self.no_closed_loop_warning = f"Talon {id} not in closed loop mode"
 
     def initialize(self, name: str = None) -> None:
         """Initialize the motors (enable the encoder, set invert status, set voltage limits)."""
         self.encoder = False
         if name != None:
             self.setName(name)
-        self.no_encoder_warning = f"No encoder connected to {self.name}"
-        self.no_closed_loop_warning = f"{self.name} not in closed loop mode"
-
+ 
     def setEncoderConfig(self, config: EncoderConfig, phase: bool) -> None:
         self.encoder = True
         self.encoder_config = config
@@ -155,7 +155,7 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
 
     def _isClosedLoop(self) -> bool:
         return self.getControlMode() in (
-            ctre.WPI_TalonSRX.ControlMode.Velocity,
-            ctre.WPI_TalonSRX.ControlMode.Position,
-            ctre.WPI_TalonSRX.ControlMode.MotionMagic,
+            self.ControlMode.Velocity,
+            self.ControlMode.Position,
+            self.ControlMode.MotionMagic,
         )

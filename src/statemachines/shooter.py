@@ -56,11 +56,9 @@ class Shooter(StateMachine):
             self.tower.stop()
             self.next_state("alignTurretAndSpinFlywheel")
 
-    @state()
     def done(self):
-        super.done()
+        super().done()
         self.chassis.setCoastMode()
         self.tower.stop()
         self.turret.stop()
         self.flywheel.stop()
-        self.done()

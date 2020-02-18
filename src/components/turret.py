@@ -184,9 +184,11 @@ class Turret:
         self.nt.putValue("searching", self.mode == self._Mode.Searching)
         self.nt.putValue("tracking_target", self.mode == self._Mode.TrackingTarget)
         self.nt.putValue(
-            "heading_error", self.turret_motor.getError() * units.degrees_per_radian(),
+            "heading_error",
+            self.turret_motor.getError() * units.degrees_per_radian
+            if self.mode == self._Mode.TrackingTarget
+            else 0,
         )
-
 
     def execute(self):
         self._checkLimitSwitches()

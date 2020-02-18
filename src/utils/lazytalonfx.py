@@ -19,6 +19,7 @@ class LazyTalonFX(ctre.WPI_TalonFX):
 
     def __init__(self, id: int):
         super().__init__(id)
+        self.no_closed_loop_warning = f"Talon {id} not in closed loop mode"
 
     def initialize(self, name: str = None) -> None:
         """Initialize the motors (enable the encoder, set invert status, set voltage limits)."""
@@ -27,7 +28,6 @@ class LazyTalonFX(ctre.WPI_TalonFX):
         self.configSelectedFeedbackSensor(
             ctre.TalonFXFeedbackDevice.IntegratedSensor, 0, self.TIMEOUT
         )
-        self.no_closed_loop_warning = f"{self.name} not in closed loop mode"
 
     def setSupplyCurrentLimit(self, current_limit, trigger_current, trigger_time):
         limits = ctre.SupplyCurrentLimitConfiguration(
@@ -119,7 +119,7 @@ class LazyTalonFX(ctre.WPI_TalonFX):
 
     def _isClosedLoop(self) -> bool:
         return self.getControlMode() in (
-            ctre.WPI_TalonSRX.ControlMode.Velocity,
-            ctre.WPI_TalonSRX.ControlMode.Position,
-            ctre.WPI_TalonSRX.ControlMode.MotionMagic,
+            self.ControlMode.Velocity,
+            self.ControlMode.Position,
+            self.ControlMode.MotionMagic,
         )
