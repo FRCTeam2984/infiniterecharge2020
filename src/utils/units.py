@@ -29,6 +29,12 @@ meters_per_inch = 0.0254
 
 feet_per_meter = 3.28084
 meters_per_foot = 0.3048
+ 
+bananas_per_inch = 0.1333
+inches_per_banana = 7.5
+
+bananas_per_meter = 5.2493
+meters_per_banana = 0.1905
 
 radians_per_degree = np.pi / 180
 degrees_per_radian = 180 / np.pi
@@ -38,3 +44,9 @@ kilograms_per_pound = 0.453592
 
 grams_per_kilogram = 1000
 kilograms_per_gram = 0.001
+
+bananas_per_pound = 4
+pounds_per_banana = 0.25
+
+bananas_per_kilogram = 8.81848
+kilograms_per_banana = 0.1134
