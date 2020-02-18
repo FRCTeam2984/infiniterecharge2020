@@ -5,14 +5,17 @@ from utils import units
 import numpy as np
 from magicbot import tunable, feedback
 from wpilib import controller
+from networktables import NetworkTables
 
 
 class Flywheel:
 
+    # motor config
+    INVERTED = True
     # motor coefs
-    FLYWHEEL_KS = 0  # V
-    FLYWHEEL_KV = 0  # V / (rpm)
-    FLYWHEEL_KA = 0  # V / (rpm / s)
+    FLYWHEEL_KS = 0.0574  # V
+    FLYWHEEL_KV = 0.131  # V / (rpm)
+    FLYWHEEL_KA = 0.0612  # V / (rpm / s)
 
     # flywheel pidf gains
     FLYWHEEL_KP = tunable(0)
@@ -23,18 +26,22 @@ class Flywheel:
 
     # percent of setpoint
     RPM_TOLERANCE = 0.05
-
+    DESIRED_RPM = tunable(0)
     # required devices
     flywheel_motor_left: rev.CANSparkMax
 
     def __init__(self):
         self.is_spinning = False
         self.desired_rpm = 0
-        self.prev_desired_rpm = 0
         self.desired_acceleration = 0
         self.feedforward = 0
 
     def setup(self):
+        self.flywheel_motor_left.setInverted(self.INVERTED)
+
+        self.nt = NetworkTables.getTable(
+            f"/components/{self.__class__.__name__.lower()}"
+        )
         self.encoder = self.flywheel_motor_left.getEncoder()
         self.flywheel_pid = self.flywheel_motor_left.getPIDController()
         self.flywheel_pid.setP(self.FLYWHEEL_KP)
@@ -54,19 +61,19 @@ class Flywheel:
         self.stop()
 
     def setRPM(self, rpm) -> None:
-        """Start spinning the flywheel."""
+        """Set the rpm of the flywheel."""
         self.is_spinning = True
-        self.rpm = rpm
+        self.desired_rpm = rpm
 
     def stop(self) -> None:
         """Stop the flywheel."""
         self.is_spinning = False
-        self.rpm = 0
+        self.desired_rpm = 0
 
     def isAtSetpoint(self) -> bool:
         """Is the flywheel at the desired speed."""
-        return abs(self.rpm - self.encoder.getVelocity()) <= (
-            self.rpm * self.RPM_TOLERANCE
+        return abs(self.desired_rpm - self.encoder.getVelocity()) <= (
+            self.desired_rpm * self.RPM_TOLERANCE
         )
 
     def isReady(self) -> bool:
@@ -74,20 +81,30 @@ class Flywheel:
         return self.isAtSetpoint()
 
     def _calculateFF(self):
+        """Calculate the feedforward voltage given current the current state."""
         self.desired_acceleration = self.desired_rpm - self.encoder.getVelocity()
         self.feedforward = self.flywheel_characterization.calculate(
-            self.desired_rpm, self.desired_acceleration
+            self.desired_rpm / 60, self.desired_acceleration / 60
         )
 
-    @feedback
-    def get_is_ready(self):
-        return self.isReady()
+    def updateNetworkTables(self):
+        """Update network table values related to component."""
+        self.nt.putNumber("desired_rpm", self.desired_rpm)
+        self.nt.putNumber("desired_accel", self.desired_rpm)
+        self.nt.putNumber("feedforward", self.feedforward)
+        self.nt.putNumber("actual_rpm", self.encoder.getVelocity())
 
     def execute(self):
+        # calculate feedword terms
         self._calculateFF()
+
         if self.is_spinning:
+            # set the flywheel at the desired rpm
             self.flywheel_pid.setReference(
-                self.rpm, rev.ControlType.kVelocity, self.feedforward
+                self.desired_rpm, rev.ControlType.kVelocity, 0, self.feedforward
             )
         else:
+            # stop the flywheel
             self.flywheel_motor_left.set(0.0)
+
+        self.updateNetworkTables()
