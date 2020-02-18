@@ -2,10 +2,11 @@
 
 import wpilib
 from magicbot import MagicRobot
-from utils import lazytalonsrx, lazypigeonimu, pose, lazytalonfx, units
+from utils import lazytalonsrx, lazypigeonimu, lazytalonfx, units
 from components import chassis, intake, tower, turret, flywheel, vision
 import rev
-
+import numpy as np
+from statemachines import shooter
 
 class Robot(MagicRobot):
     DRIVE_SLAVE_LEFT_ID = 1
@@ -37,6 +38,7 @@ class Robot(MagicRobot):
     turret: turret.Turret
     flywheel: flywheel.Flywheel
     vision: vision.Vision
+    shooter: shooter.Shooter
 
     def createObjects(self):
         """Initialize all wpilib motors & sensors"""
@@ -72,7 +74,10 @@ class Robot(MagicRobot):
 
         # setup imu
         self.imu = lazypigeonimu.LazyPigeonIMU(self.intake_motor)
-
+        
+        # setup leds
+        # self.led = wpilib.AddressableLED(0)
+        
         # setup joysticks
         self.driver = wpilib.Joystick(0)
         self.operator = wpilib.Joystick(1)
@@ -80,34 +85,50 @@ class Robot(MagicRobot):
     def teleopPeriodic(self):
         """Place code here that does things as a result of operator
            actions"""
-        try:
-            # driver joystick control of chassis
+        try:    
+            # TODO remove temp controls
+            if self.operator.getRawButtonPressed(1):
+                if self.turret.isSlewing():
+                    self.turret.stop()
+                else:
+                    self.turret.searchForTarget()
+            if self.operator.getRawButtonPressed(2):
+                if self.flywheel.is_spinning:
+                    self.flywheel.stop()
+                else:
+                    self.flywheel.setRPM(0)
+
+            
+            #################
+            # real controls #
+            #################
+
+            # # driver joystick control of chassis
             # if self.chassis.mode != self.chassis._Mode.Vision:
             #     throttle = self.driver.getY()
             #     rotation = self.driver.getZ()
             #     self.chassis.setFromJoystick(throttle, rotation)
 
-            # driver control of chassis target tracking
+            # # driver control of chassis target tracking
             # if self.driver.getRawButtonPressed(1):
             #     if self.chassis.mode == self.chassis._Mode.Vision:
             #         self.chassis.stop()
             #     else:
             #         self.chassis.trackTarget()
 
-            # operator control of turret target tracking
-            if self.operator.getRawButtonPressed(1):
-                if self.turret.isSlewing():
-                    self.turret.stop()
-                else:
-                    self.turret.searchForTarget()
-
-            # if self.operator.getRawButtonPressed(2):
-            #     self.turret_motor.zero()
-            # if self.operator.getRawButtonPressed(3):
-            #     if self.flywheel.is_spinning:
-            #         self.flywheel.stop()
+            # # operator control of shooter
+            # if self.operator.getRawButtonPressed(1):
+            #     if self.shooter.is_shooting:
+            #         self.shooter.stop()
             #     else:
-            #         self.flywheel.setRPM(3500)
+            #         self.shooter.shoot()
+
+            # # operator control of indexer
+            # if self.operator.getRawButtonPressed(5):
+            #     if self.indexer.is_indexing:
+            #         self.indexer.stop()
+            #     else:
+            #         self.indexer.index()
 
 
         except:
