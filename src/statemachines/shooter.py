@@ -10,8 +10,8 @@ class Shooter(StateMachine):
     DISTANCES = (
         np.array((6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)) * units.meters_per_foot
     )
-    RPMS = np.array((2475, 2475, 2350, 2250, 2275, 2300, 2260, 2300, 2320, 2330, 2335))
-
+    RPMS = (2475, 2475, 2350, 2250, 2275, 2300, 2260, 2300, 2320, 2330, 2335)
+    
     chassis: chassis.Chassis
     tower: tower.Tower
     turret: turret.Turret
@@ -32,8 +32,6 @@ class Shooter(StateMachine):
 
     @state(first=True)
     def alignTurretAndSpinFlywheel(self, initial_call):
-        if self.balls_shot == 4:
-            self.done()
         if initial_call:
             self.turret.trackTarget()
         self.desired_rpm = np.interp(
@@ -45,10 +43,7 @@ class Shooter(StateMachine):
 
     @state()
     def feedBalls(self, initial_call):
-        if self.balls_shot == 4:
-            self.done()
         if initial_call:
-            self.balls_shot += 1
             self.tower.lift()
         if not self.isReadyToShoot():
             self.tower.stop()
