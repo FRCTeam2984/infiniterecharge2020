@@ -27,7 +27,7 @@ class Turret:
     PEAK_CURRENT_DURATION = 1000
     CONTINUOUS_CURRENT = 25
 
-    # motion magic pidf gains
+    # position pidf gains
     TURRET_KP = 4
     TURRET_KI = 0.01
     TURRET_KD = 0
@@ -46,8 +46,8 @@ class Turret:
     VISION_TOLERANCE = 1 * units.radians_per_degree
 
     # search config
-    SEARCH_MIN = (SOFT_MIN + 10) * units.radians_per_degree
-    SEARCH_MAX = (SOFT_MAX - 10) * units.radians_per_degree
+    SEARCH_MIN = SOFT_MIN + 5 * units.radians_per_degree
+    SEARCH_MAX = SOFT_MAX - 5 * units.radians_per_degree
     SEARCH_SPEED = 0.2
 
     # required devices
@@ -99,7 +99,7 @@ class Turret:
         )
 
     def on_enable(self):
-        pass
+        self.turret_motor.zero()
 
     def on_disable(self):
         self.stop()

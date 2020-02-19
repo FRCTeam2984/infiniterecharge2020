@@ -1,7 +1,8 @@
 from networktables import NetworkTables
 from utils import units
 import numpy as np
-
+from magicbot import tunable
+from utils import lazypigeonimu
 
 class Vision:
 
@@ -11,15 +12,14 @@ class Vision:
     CAMERA_PITCH = (
         -1.65 * units.radians_per_degree
     )  # empirically calculated: ty - atan((TARGET_HEIGHT - CAMERA_HEIGHT) / distance)
-
+    CAMERA_HEADING = -1
     # desired setpoints and tolerances
-    DISTANCE_DESIRED = 192 * units.meters_per_inch
+    DISTANCE_DESIRED = 144 * units.meters_per_inch
     DISTANCE_TOLERANCE_FINE = 2 * units.meters_per_inch
     DISTANCE_TOLERANCE_COARSE = 12 * units.meters_per_inch
 
     HEADING_DESIRED = 0 * units.radians_per_degree
     HEADING_TOLERANCE_FINE = 1 * units.radians_per_degree
-    HEADING_TOLERANCE_COARSE = 30 * units.radians_per_degree
 
     def __init__(self):
         self.limelight = NetworkTables.getTable("limelight")
@@ -43,8 +43,11 @@ class Vision:
 
     def getHeading(self) -> float:
         """Get the yaw offset to the target."""
-        heading = self.limelight.getNumber("tx", np.nan) * units.radians_per_degree
+        heading = (self.limelight.getNumber("tx", np.nan) + self.CAMERA_HEADING)* units.radians_per_degree
         return heading
+
+    # def getAllocentricHeading(self):
+    #     return 180 + self.turret._getHeading() + self.getHeading() - self.imu.getHeading()
 
     def getPitch(self) -> float:
         """Get the pitch offset to the target."""
@@ -56,14 +59,6 @@ class Vision:
         pitch = self.getPitch()
         distance = (self.TARGET_HEIGHT - self.CAMERA_HEIGHT) / np.tan(pitch)
         return distance
-
-    def getHeadingError(self) -> float:
-        """Get the error in the heading from the desired heading."""
-        return self.getHeadingError() - self.HEADING_DESIRED
-
-    def getDistanceError(self) -> float:
-        """Get the error in the distance from the desired distance."""
-        return self.getDistance() - self.DISTANCE_DESIRED
 
     def isDistanceInCoarseRange(self) -> bool:
         """Is the distance roughly where is should be."""
@@ -79,15 +74,7 @@ class Vision:
             <= self.DISTANCE_TOLERANCE_FINE
         )
 
-    def isHeadingInCoarseRange(self) -> bool:
-        """Is the heading roughly where is should be."""
-
-        return (
-            abs(self.getHeading() - self.HEADING_DESIRED)
-            <= self.HEADING_TOLERANCE_COARSE
-        )
-
-    def isHeadingInFineRange(self) -> bool:
+    def isHeadingInRange(self) -> bool:
         """Is the heading exactly where is should be."""
         return (
             abs(self.getHeading() - self.HEADING_DESIRED) <= self.HEADING_TOLERANCE_FINE
@@ -95,7 +82,7 @@ class Vision:
 
     def isChassisReady(self) -> bool:
         """Is the chassis ready to shoot."""
-        return self.isHeadingInCoarseRange() and self.isDistanceInCoarseRange()
+        return self.isDistanceInCoarseRange()
 
     def isTurretReady(self) -> bool:
         """Is the turret ready to shoot."""
