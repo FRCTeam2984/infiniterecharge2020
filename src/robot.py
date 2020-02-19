@@ -2,10 +2,11 @@
 
 import wpilib
 from magicbot import MagicRobot
-from utils import lazypigeonimu, lazytalonfx, lazytalonsrx
+from utils import lazypigeonimu, lazytalonfx, lazytalonsrx, units
 from components import chassis, intake, tower, turret, flywheel, vision, leds
 import rev
 from statemachines import shooter
+import numpy as np
 
 
 class Robot(MagicRobot):
@@ -69,6 +70,14 @@ class Robot(MagicRobot):
         # )
         # self.flywheel_motor_right.follow(self.flywheel_motor_left, True)
 
+        self.climb_winch_left = lazytalonsrx.LazyTalonSRX(self.CLIMB_WINCH_LEFT_ID)
+        self.climb_winch_right = lazytalonsrx.LazyTalonSRX(self.CLIMB_WINCH_RIGHT_ID)
+        self.climb_winch_right.follow(self.climb_winch_left)
+
+        self.buddy_winch_left = lazytalonsrx.LazyTalonSRX(self.BUDDY_WINCH_LEFT_ID)
+        self.buddy_winch_right = lazytalonsrx.LazyTalonSRX(self.BUDDY_WINCH_RIGHT_ID)
+        self.buddy_winch_right.follow(self.buddy_winch_left)
+
         self.climb_arm = lazytalonsrx.LazyTalonSRX(self.CLIMB_ARM_ID)
         self.trolley_motor = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ID)
 
@@ -112,17 +121,17 @@ class Robot(MagicRobot):
             #################
 
             # # driver joystick control of chassis
-            # if self.chassis.mode != self.chassis._Mode.Vision:
-            #     throttle = self.driver.getY()
-            #     rotation = self.driver.getZ()
-            #     self.chassis.setFromJoystick(throttle, rotation)
+            if not self.chassis.isAligning():
+                throttle = self.driver.getY()
+                rotation = self.driver.getZ()
+                self.chassis.setFromJoystick(throttle, rotation)
 
-            # # driver control of chassis target tracking
-            # if self.driver.getRawButtonPressed(1):
-            #     if self.chassis.mode == self.chassis._Mode.Vision:
-            #         self.chassis.stop()
-            #     else:
-            #         self.chassis.trackTarget()
+            # driver control of chassis target tracking
+            if self.driver.getRawButtonPressed(1):
+                if self.chassis.mode == self.chassis._Mode.Vision:
+                    self.chassis.stop()
+                else:
+                    self.chassis.trackTarget()
 
             # # operator control of shooter
             # if self.operator.getRawButtonPressed(1):

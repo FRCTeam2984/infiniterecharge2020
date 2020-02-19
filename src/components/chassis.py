@@ -11,6 +11,8 @@ from controls import pidf
 from components import vision
 import numpy as np
 from networktables import NetworkTables
+import logging
+from magicbot import tunable
 
 
 class Chassis:
@@ -62,21 +64,23 @@ class Chassis:
     VELOCITY_RIGHT_KF = 0
 
     # target tracking pidf gains
-    HEADING_KP = 0
+    HEADING_KP = 1
     HEADING_KI = 0
     HEADING_KD = 0
     HEADING_KF = 0
 
-    DISTANCE_KP = 0
+    DISTANCE_KP = 4.5
     DISTANCE_KI = 0
     DISTANCE_KD = 0
     DISTANCE_KF = 0
 
     # joystick control parameters
+    JOYSTICK_THROTTLE_SCALAR = 1
+    JOYSTICK_ROTATION_SCALAR = 0.5
     JOYSTICK_THROTTLE_EXPONENT = 1
     JOYSTICK_ROTATION_EXPONENT = 1
     JOYSTICK_MAX_PERCECNT = 0.5
-    JOYSTICK_DEADBAND = 0.08
+    JOYSTICK_DEADBAND = 0.075
 
     # required components
     vision: vision.Vision
@@ -121,6 +125,7 @@ class Chassis:
             -np.pi,
             np.pi,
         )
+        self.heading_pidf.setOutputRange(-0.4, 0.4)
         self.distance_pidf = pidf.PIDF(
             self.vision.DISTANCE_DESIRED,
             self.DISTANCE_KP,
@@ -128,6 +133,7 @@ class Chassis:
             self.DISTANCE_KD,
             self.DISTANCE_KF,
         )
+        self.distance_pidf.setOutputRange(-1, 1)
         self.drive_master_left.setPIDF(
             0,
             self.VELOCITY_LEFT_KP,
@@ -186,17 +192,22 @@ class Chassis:
     def setOutput(self, output_l: float, output_r: float) -> None:
         """Set the output of the motors."""
         self.mode = self._Mode.PercentOutput
+        self.drive_master_left.setCoastMode()
+        self.drive_master_right.setCoastMode()
         self.desired_output.left = output_l
         self.desired_output.right = output_r
 
     def setFromJoystick(self, throttle: float, rotation: float) -> None:
         """Set the output of the motors from joystick values."""
-        throttle **= self.JOYSTICK_THROTTLE_EXPONENT
-        rotation **= self.JOYSTICK_ROTATION_EXPONENT
+        throttle = (
+            throttle ** self.JOYSTICK_THROTTLE_EXPONENT
+        ) * self.JOYSTICK_THROTTLE_SCALAR
+        rotation = (
+            rotation ** self.JOYSTICK_ROTATION_EXPONENT
+        ) * self.JOYSTICK_ROTATION_SCALAR
 
         throttle = 0 if abs(throttle) <= self.JOYSTICK_DEADBAND else throttle
         rotation = 0 if abs(rotation) <= self.JOYSTICK_DEADBAND else rotation
-
         output_l = np.clip(
             throttle - rotation, -self.JOYSTICK_MAX_PERCECNT, self.JOYSTICK_MAX_PERCECNT
         )
@@ -208,6 +219,8 @@ class Chassis:
     def setVelocity(self, velocity_l: float, velocity_r: float) -> None:
         """Set the velocity of the motors in m/s."""
         self.mode = self._Mode.Velocity
+        self.drive_master_left.setCoastMode()
+        self.drive_master_right.setCoastMode()
         self.desired_velocity.left = velocity_l
         self.desired_velocity.right = velocity_r
 
@@ -323,11 +336,12 @@ class Chassis:
             )
         elif self.mode == self._Mode.Vision:
             # calculate pidf outputs
-            distance_error = self.vision.getDistanceError()
-            heading_error = self.vision.getHeadingError()
+            distance = self.vision.getDistance()
+            # logging.info(distance_error)
+            heading = self.vision.getHeading()
 
-            distance_adjust = self.distance_pidf.update(distance_error, dt)
-            heading_adjust = self.heading_pidf.update(heading_error, dt)
+            distance_adjust = self.distance_pidf.update(distance, dt)
+            heading_adjust = self.heading_pidf.update(heading, dt)
 
             # calculate wheel velocities and set motor outputs
             self.desired_velocity.left = distance_adjust + heading_adjust
@@ -335,15 +349,22 @@ class Chassis:
 
             self._computeAcceleration(dt)
             self._computeFF()
-
-            self.drive_master_left.setVelocity(
-                self.desired_velocity.left * self.RADIANS_PER_METER,
-                self.feedforward.left,
-            )
-            self.drive_master_right.setVelocity(
-                self.desired_velocity.right * self.RADIANS_PER_METER,
-                self.feedforward.right,
-            )
+            if self.vision.isChassisReady():
+                self.drive_master_left.setBreakMode()
+                self.drive_master_right.setBreakMode()
+                self.drive_master_left.setOutput(0)
+                self.drive_master_right.setOutput(0)
+            else:
+                self.drive_master_left.setCoastMode()
+                self.drive_master_right.setCoastMode()
+                self.drive_master_left.setVelocity(
+                    self.desired_velocity.left * self.RADIANS_PER_METER,
+                    self.feedforward.left,
+                )
+                self.drive_master_right.setVelocity(
+                    self.desired_velocity.right * self.RADIANS_PER_METER,
+                    self.feedforward.right,
+                )
         self.prev_time = cur_time
 
         self.prev_wheel_position.left = self.wheel_position.left
