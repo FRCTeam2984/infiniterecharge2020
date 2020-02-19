@@ -8,11 +8,13 @@ class Flywheel:
 
     # motor config
     INVERTED = True
+    CLOSED_LOOP_RAMP = 2.5
+    OPEN_LOOP_RAMP = 2.5
 
     # motor coefs
     FLYWHEEL_KS = 0.0574  # V
-    FLYWHEEL_KV = 0.131  # V / (rps)
-    FLYWHEEL_KA = 0.0612  # V / (rps / s)
+    FLYWHEEL_KV = 0.002183  # V / (rpm)
+    FLYWHEEL_KA = 0.00102  # V / (rpm / s)
 
     # flywheel pidf gains
     FLYWHEEL_KP = tunable(0)
@@ -24,6 +26,9 @@ class Flywheel:
     # percent of setpoint
     RPM_TOLERANCE = 0.05
 
+    # TODO remove
+    DESIRED_RPM = tunable(0)
+    
     # required devices
     flywheel_motor_left: rev.CANSparkMax
 
@@ -35,6 +40,8 @@ class Flywheel:
 
     def setup(self):
         self.flywheel_motor_left.setInverted(self.INVERTED)
+        self.flywheel_motor_left.setOpenLoopRampRate(self.OPEN_LOOP_RAMP)
+        self.flywheel_motor_left.setClosedLoopRampRate(self.CLOSED_LOOP_RAMP)
 
         self.nt = NetworkTables.getTable(
             f"/components/{self.__class__.__name__.lower()}"
@@ -52,7 +59,11 @@ class Flywheel:
         )
 
     def on_enable(self):
-        pass
+        self.flywheel_pid.setP(self.FLYWHEEL_KP)
+        self.flywheel_pid.setI(self.FLYWHEEL_KI)
+        self.flywheel_pid.setD(self.FLYWHEEL_KD)
+        self.flywheel_pid.setFF(self.FLYWHEEL_KF)
+        self.flywheel_pid.setIZone(self.FLYWHEEL_IZONE)
 
     def on_disable(self):
         self.stop()
@@ -81,7 +92,7 @@ class Flywheel:
         """Calculate the feedforward voltage given current the current state."""
         self.desired_acceleration = self.desired_rpm - self.encoder.getVelocity()
         self.feedforward = self.flywheel_characterization.calculate(
-            self.desired_rpm / 60, self.desired_acceleration / 60
+            self.desired_rpm, self.desired_acceleration
         )
 
     def updateNetworkTables(self):
@@ -92,6 +103,9 @@ class Flywheel:
         self.nt.putNumber("actual_rpm", self.encoder.getVelocity())
 
     def execute(self):
+        # TODO remove
+        self.desired_rpm = self.DESIRED_RPM
+        
         # calculate feedword terms
         self._calculateFF()
 
