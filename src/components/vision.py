@@ -94,6 +94,7 @@ class Vision:
     def updateNetworkTables(self):
         self.nt.putValue("heading", self.getHeading() * units.degrees_per_radian)
         self.nt.putValue("distance", self.getDistance() * units.inches_per_meter)
+        self.nt.putValue("distance_in_bananas", self.getDistance() * units.bananas_per_meter)
         self.nt.putValue("pitch", self.getPitch() * units.degrees_per_radian)
         self.nt.putValue("has_target", self.hasTarget())
 
