@@ -5,7 +5,7 @@ from magicbot import MagicRobot
 from utils import lazypigeonimu, lazytalonfx, lazytalonsrx, units
 from components import chassis, intake, tower, turret, flywheel, vision, leds
 import rev
-from statemachines import shooter
+from statemachines import shooter, alignchassis
 import numpy as np
 
 
@@ -40,6 +40,7 @@ class Robot(MagicRobot):
     flywheel: flywheel.Flywheel
     vision: vision.Vision
     shooter: shooter.Shooter
+    alignchassis: alignchassis.AlignChassis
     leds: leds.LED
 
     def createObjects(self):
@@ -96,43 +97,34 @@ class Robot(MagicRobot):
            actions"""
         try:
             # TODO remove temp controls
-            if self.operator.getRawButtonPressed(1):
-                if self.turret.isSlewing():
-                    self.turret.stop()
-                else:
-                    self.turret.searchForTarget()
+            if self.operator.getRawButton(1):
+                self.shooter.shoot()
 
-            DISTANCES = (
-                np.array((6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)) * units.meters_per_foot
-            )
-            RPMS = np.array((2475, 2475, 2350, 2250, 2275, 2300, 2260, 2300, 2320, 2330, 2335))
-            desired_rpm = np.interp(
-                self.vision.getDistance(), DISTANCES, RPMS
-            )
+            # DISTANCES = (
+            #     np.array((6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)) * units.meters_per_foot
+            # )
+            # RPMS = np.array((2475, 2475, 2350, 2250, 2275, 2300, 2260, 2300, 2320, 2330, 2335))
+            # desired_rpm = np.interp(
+            #     self.vision.getDistance(), DISTANCES, RPMS
+            # )
 
-            if self.operator.getRawButtonPressed(2):
-                if self.flywheel.is_spinning:
-                    self.flywheel.stop()
-                else:
-                    self.flywheel.setRPM(desired_rpm)
+            # if self.operator.getRawButtonPressed(2):
+            #     if self.flywheel.is_spinning:
+            #         self.flywheel.stop()
+            #     else:
+            #         # self.flywheel.setRPM(zdesired_rpm)
 
             #################
             # real controls #
             #################
-
             # # driver joystick control of chassis
-            if not self.chassis.isAligning():
+            # driver control of chassis target tracking
+            if self.driver.getRawButton(1):
+                self.alignchassis.align()
+            else:
                 throttle = self.driver.getY()
                 rotation = self.driver.getZ()
                 self.chassis.setFromJoystick(throttle, rotation)
-
-            # driver control of chassis target tracking
-            if self.driver.getRawButtonPressed(1):
-                if self.chassis.mode == self.chassis._Mode.Vision:
-                    self.chassis.stop()
-                else:
-                    self.chassis.trackTarget()
-
             # # operator control of shooter
             # if self.operator.getRawButtonPressed(1):
             #     if self.shooter.is_shooting:
