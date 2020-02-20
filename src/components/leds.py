@@ -1,7 +1,7 @@
-from components import chassis, vision, turret, flywheel
+import numpy as np
 
 import wpilib
-import numpy as np
+from components import chassis, flywheel, turret, vision
 
 
 class LED:

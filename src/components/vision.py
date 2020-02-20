@@ -1,8 +1,8 @@
-from networktables import NetworkTables
-from utils import units
 import numpy as np
-from magicbot import tunable
-from utils import lazypigeonimu
+from networktables import NetworkTables
+
+from utils import units
+
 
 class Vision:
 
@@ -43,7 +43,9 @@ class Vision:
 
     def getHeading(self) -> float:
         """Get the yaw offset to the target."""
-        heading = (self.limelight.getNumber("tx", np.nan) + self.CAMERA_HEADING)* units.radians_per_degree
+        heading = (
+            self.limelight.getNumber("tx", np.nan) + self.CAMERA_HEADING
+        ) * units.radians_per_degree
         return heading
 
     def getPitch(self) -> float:

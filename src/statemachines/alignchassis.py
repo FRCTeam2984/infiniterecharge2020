@@ -1,11 +1,11 @@
-from magicbot.state_machine import StateMachine, state
-from components import vision, chassis, flywheel, tower, turret
-from utils import units, drivesignal, lazypigeonimu
-from controls import pidf
 import numpy as np
 from networktables import NetworkTables
 
 import wpilib
+from components import chassis, turret, vision
+from controls import pidf
+from magicbot.state_machine import StateMachine, state
+from utils import drivesignal, lazypigeonimu
 
 
 class AlignChassis(StateMachine):
@@ -25,6 +25,7 @@ class AlignChassis(StateMachine):
     turret: turret.Turret
     vision: vision.Vision
     imu: lazypigeonimu.LazyPigeonIMU
+
     def __init__(self):
         self.desired_velocity = drivesignal.DriveSignal()
         self.prev_time = 0
@@ -50,7 +51,6 @@ class AlignChassis(StateMachine):
         )
         self.distance_pidf.setOutputRange(-1, 1)
 
-
     def setup(self):
         self.nt = NetworkTables.getTable("/components/alignchassis")
 
@@ -62,9 +62,7 @@ class AlignChassis(StateMachine):
 
     def getAllocentricHeading(self):
         return (
-            self.vision.getHeading()
-            -self.turret.getHeading()
-            - self.imu.getHeading()
+            self.vision.getHeading() - self.turret.getHeading() - self.imu.getHeading()
         )
 
     @state(first=True)

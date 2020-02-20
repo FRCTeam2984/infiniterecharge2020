@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
-import wpilib
-from magicbot import MagicRobot
-from utils import lazypigeonimu, lazytalonfx, lazytalonsrx, units
-from components import chassis, intake, tower, turret, flywheel, vision, leds
 import rev
-from statemachines import shooter, alignchassis
-import numpy as np
+import wpilib
+from components import chassis, flywheel, intake, leds, tower, turret, vision
+from magicbot import MagicRobot
+from statemachines import alignchassis, shooter
+from utils import lazypigeonimu, lazytalonfx, lazytalonsrx
 
 
 class Robot(MagicRobot):

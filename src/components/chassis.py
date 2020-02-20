@@ -1,17 +1,10 @@
-from wpilib import Timer, controller
 from enum import Enum
-from utils import (
-    lazypigeonimu,
-    lazytalonfx,
-    units,
-    drivesignal,
-    wheelstate,
-)
-from controls import pidf
+
 import numpy as np
 from networktables import NetworkTables
-import logging
-from magicbot import tunable
+
+from utils import drivesignal, lazypigeonimu, lazytalonfx, units, wheelstate
+from wpilib import Timer, controller
 
 
 class Chassis:

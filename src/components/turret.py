@@ -1,9 +1,11 @@
 import logging
 from enum import Enum
-from utils import units, lazytalonsrx, lazypigeonimu
+
+from networktables import NetworkTables
+
 from components import vision
 from magicbot import tunable
-from networktables import NetworkTables
+from utils import lazypigeonimu, lazytalonsrx, units
 
 
 class Turret:

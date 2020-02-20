@@ -1,7 +1,8 @@
 import logging
 
-import ctre
 import numpy as np
+
+import ctre
 
 
 class LazyTalonFX(ctre.WPI_TalonFX):

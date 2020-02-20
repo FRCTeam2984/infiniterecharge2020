@@ -1,8 +1,8 @@
-from magicbot.state_machine import StateMachine, state, timed_state
-from components import vision, chassis, flywheel, tower, turret
-from utils import units
-import numpy as np
 from networktables import NetworkTables
+
+from components import chassis, flywheel, tower, turret, vision
+from magicbot.state_machine import StateMachine, state, timed_state
+from utils import units
 
 
 class Shooter(StateMachine):
@@ -62,7 +62,7 @@ class Shooter(StateMachine):
 
         else:
             self.next_state("searchForTarget")
-            
+
     @state
     def spinFlywheel(self, initial_call):
         if initial_call:
@@ -84,4 +84,3 @@ class Shooter(StateMachine):
         self.tower.stop()
         self.turret.stop()
         self.flywheel.stop()
-
