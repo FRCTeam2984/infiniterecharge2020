@@ -1,4 +1,4 @@
-from magicbot.state_machine import StateMachine, state
+from magicbot.state_machine import StateMachine, state, timed_state
 from components import vision, chassis, flywheel, tower, turret
 from utils import units
 import numpy as np
@@ -7,21 +7,21 @@ from networktables import NetworkTables
 
 class Shooter(StateMachine):
 
-    DISTANCES = (
-        np.array((6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)) * units.meters_per_foot
-    )
-    RPMS = (2475, 2475, 2350, 2250, 2275, 2300, 2260, 2300, 2320, 2330, 2335)
-    
+    # search config
+    SEARCH_MIN = -45 * units.radians_per_degree
+    SEARCH_MAX = 45 * units.radians_per_degree
+    SEARCH_SPEED = 0.2
+
     chassis: chassis.Chassis
     tower: tower.Tower
     turret: turret.Turret
     flywheel: flywheel.Flywheel
     vision: vision.Vision
 
+    def __init__(self):
+        self.is_searching_reverse = False
+
     def setup(self):
-        self.chassis.setBreakMode()
-        self.balls_shot = 0
-        self.desired_rpm = 0
         self.nt = NetworkTables.getTable("/components/shooter")
 
     def shoot(self):
@@ -30,28 +30,58 @@ class Shooter(StateMachine):
     def isReadyToShoot(self):
         return self.turret.isReady() and self.flywheel.isReady()
 
-    @state(first=True)
-    def alignTurretAndSpinFlywheel(self, initial_call):
+    @state(first="True")
+    def searchForTarget(self, initial_call):
         if initial_call:
-            self.turret.trackTarget()
-        self.desired_rpm = np.interp(
-            self.vision.getDistance(), self.DISTANCES, self.RPMS
-        )
-        self.flywheel.setRPM(self.desired_rpm)
-        if self.turret.isReady() and self.flywheel.isReady():
+            # set initial search direction
+            self.is_searching_reverse = self.turret.getHeading() <= 0
+
+        # search forwards or reverse
+        if self.is_searching_reverse:
+            self.turret.setOutput(-self.SEARCH_SPEED)
+        else:
+            self.turret.setOutput(self.SEARCH_SPEED)
+
+        # switch diections if min or max exceeded
+        if self.turret.getHeading() <= self.SEARCH_MIN:
+            self.is_searching_reverse = False
+        elif self.turret.getHeading() >= self.SEARCH_MAX:
+            self.is_searching_reverse = True
+
+        # if a vision target is found, track it
+        if self.vision.hasTarget():
+            self.next_state("trackTarget")
+
+    @state
+    def trackTargetAndSpinFlywheel(self, initial_call):
+        if self.vision.hasTarget():
+            heading_error = self.vision.getHeading()
+            self.turret.setRelativeHeading(heading_error)
+            if self.turret.isReady():
+                self.next_state("spinFlywheel")
+
+        else:
+            self.next_state("searchForTarget")
+            
+    @state
+    def spinFlywheel(self, initial_call):
+        if initial_call:
+            distance = self.vision.getDistance()
+            self.flywheel.setDistance(distance)
+        if self.flywheel.isReady():
             self.next_state("feedBalls")
 
-    @state()
+    @timed_state(duration=10)
     def feedBalls(self, initial_call):
-        if initial_call:
-            self.tower.lift()
-        if not self.isReadyToShoot():
+        if not self.flywheel.isReady():
             self.tower.stop()
-            self.next_state("alignTurretAndSpinFlywheel")
+            self.next_state("spinFlywheel")
+        else:
+            self.tower.lift()
 
     def done(self):
         super().done()
-        self.chassis.setCoastMode()
         self.tower.stop()
         self.turret.stop()
         self.flywheel.stop()
+

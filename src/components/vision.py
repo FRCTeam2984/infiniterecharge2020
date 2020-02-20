@@ -46,9 +46,6 @@ class Vision:
         heading = (self.limelight.getNumber("tx", np.nan) + self.CAMERA_HEADING)* units.radians_per_degree
         return heading
 
-    # def getAllocentricHeading(self):
-    #     return 180 + self.turret._getHeading() + self.getHeading() - self.imu.getHeading()
-
     def getPitch(self) -> float:
         """Get the pitch offset to the target."""
         pitch_offset = self.limelight.getNumber("ty", np.nan) * units.radians_per_degree
@@ -86,7 +83,7 @@ class Vision:
 
     def isTurretReady(self) -> bool:
         """Is the turret ready to shoot."""
-        return self.isHeadingInFineRange()
+        return self.isHeadingInRange()
 
     def isReady(self) -> bool:
         """Is the entire robot ready to shoot balls."""

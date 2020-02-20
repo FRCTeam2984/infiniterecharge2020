@@ -1,6 +1,6 @@
 import logging
 from enum import Enum
-from utils import units, lazytalonsrx
+from utils import units, lazytalonsrx, lazypigeonimu
 from components import vision
 from magicbot import tunable
 from networktables import NetworkTables
@@ -45,32 +45,25 @@ class Turret:
     # tolerance to setpoint error
     VISION_TOLERANCE = 1 * units.radians_per_degree
 
-    # search config
-    SEARCH_MIN = SOFT_MIN + 5 * units.radians_per_degree
-    SEARCH_MAX = SOFT_MAX - 5 * units.radians_per_degree
-    SEARCH_SPEED = 0.2
-
     # required devices
     turret_motor: lazytalonsrx.LazyTalonSRX
 
     # required components
     vision: vision.Vision
+    imu: lazypigeonimu.LazyPigeonIMU
 
     class _Mode(Enum):
         Idle = 0
-        Searching = 1
-        TrackingTarget = 2
+        Output = 1
+        Heading = 2
 
     def __init__(self):
         self.mode = self._Mode.Idle
-        self.last_mode = self.mode
-        self.output = 0
+        self.desired_output = 0
+        self.desired_heading = 0
         self.nt = NetworkTables.getTable(
             f"/components/{self.__class__.__name__.lower()}"
         )
-        self.is_searching_reverse = False
-        self.output = 0
-        self.wanted_heading = 0
 
     def setup(self):
         # self.turret_motor.setStatusFramePeriod(
@@ -104,69 +97,46 @@ class Turret:
     def on_disable(self):
         self.stop()
 
-    def isTrackingTarget(self) -> bool:
-        return self.mode == self._Mode.TrackingTarget
-
-    def isSearching(self) -> bool:
-        return self.mode == self._Mode.Searching
-
-    def isSlewing(self) -> bool:
-        return self.isTrackingTarget() or self.isSearching()
-
     def stop(self) -> None:
         """Stop the turret."""
         self.mode = self._Mode.Idle
 
-    def searchForTarget(self) -> None:
-        """Slew the turret back and forth, searhing for a vision target."""
-        self.mode = self._Mode.Searching
-
-    def trackTarget(self) -> None:
-        """Move turret to actively track the vision target."""
-        self.mode = self._Mode.TrackingTarget
-
-    def _isWithinSoftLimits(self, angle: float) -> bool:
-        """Is the given angle within the soft limits."""
-        return self.SOFT_MIN <= angle and angle <= self.SOFT_MAX
+    def _isWithinSoftLimits(self, heading: float) -> bool:
+        """Is the given heading within the soft limits."""
+        return self.SOFT_MIN <= heading and heading <= self.SOFT_MAX
 
     def isWithinSoftLimits(self) -> bool:
         """Is the turret heading within the soft limits."""
-        heading = self._getHeadingInRange()
+        heading = self.getHeading()
         return self._isWithinSoftLimits(heading)
-
-    def isAtVisionTarget(self) -> bool:
-        """Is the turret centered on the vision target."""
-        return (
-            self.mode == self._Mode.TrackingTarget
-            and self.vision.isHeadingInFineRange()
-        )
 
     def isReady(self) -> bool:
         """Is the turret ready to shoot balls."""
-        return self.isAtVisionTarget()
+        return (self.mode == self._Mode.Heading) and abs(
+            self.desired_heading - self.getHeading()
+        ) <= self.HEADING_TOLERANCE
 
-    def _getHeading(self) -> float:
+    def getHeading(self) -> float:
         """Get the heading of the turret."""
         return self.turret_motor.getPosition() * self.OUTPUT_PER_INPUT
 
-    def _getHeadingInRange(self) -> float:
-        """Get the heading of the turret in the range [-pi, pi]."""
-        return units.angle_range(self._getHeading())
+    def setOutput(self, output: float) -> None:
+        self.desired_output = output
 
-    def _setRelativeHeading(self, heading: float) -> float:
+    def setRelativeHeading(self, heading: float) -> None:
         """Set the heading of the turret relative to the current heading."""
-        heading += self._getHeading()
-        self._setAbsoluteHeading(heading)
+        heading += self.getHeading()
+        self.setAbsoluteHeading(heading)
 
-    def _setAbsoluteHeading(self, heading: float) -> float:
+    def setAbsoluteHeading(self, heading: float) -> None:
         """Set the absolute heading of the turret."""
-        heading *= self.INPUT_PER_OUTPUT
-        if self._isWithinSoftLimits(heading):
-            self.turret_motor.setMotionMagicPosition(heading)
-        else:
-            logging.warning(
-                f"Trying to set turret at {heading} which is outside of soft limits"
-            )
+        self.mode = self._Mode.Heading
+        self.desired_heading = heading
+
+    def setAllocentricHeading(self, heading: float) -> None:
+        """Set the allocentric (relative to field) heading of the turret."""
+        self.mode = self._Mode.Heading
+        self.desired_heading = heading - self.imu.getHeadingInRange()
 
     def _checkLimitSwitches(self) -> None:
         """Reset turret heading if limit switch triggered."""
@@ -175,50 +145,35 @@ class Turret:
         if self.turret_motor.isRevLimitSwitchClosed():
             self.turret_motor.zero(self.SOFT_MIN)
 
+    def _setHeading(self, heading: float):
+        heading = units.angle_range(heading)
+        if self._isWithinSoftLimits(heading):
+            self.turret_motor.setMotionMagicPosition(heading * self.INPUT_PER_OUTPUT)
+        else:
+            logging.warning(
+                f"Trying to set turret at {heading} which is outside of soft limits"
+            )
+
     def updateNetworkTables(self) -> None:
         """Update network table values related to component."""
-        self.nt.putValue("heading", self._getHeading() * units.degrees_per_radian)
+        self.nt.putValue("heading", self.getHeading() * units.degrees_per_radian)
         self.nt.putValue(
-            "heading_in_range", self._getHeadingInRange() * units.degrees_per_radian
+            "is_at_heading", self.mode == self._Mode.Heading and self.isReady()
         )
-        self.nt.putValue("searching", self.mode == self._Mode.Searching)
-        self.nt.putValue("tracking_target", self.mode == self._Mode.TrackingTarget)
         self.nt.putValue(
             "heading_error",
             self.turret_motor.getError() * units.degrees_per_radian
-            if self.mode == self._Mode.TrackingTarget
+            if self.mode == self._Mode.Heading
             else 0,
         )
 
     def execute(self):
         self._checkLimitSwitches()
         if self.mode == self._Mode.Idle:
-            # stop the turret if idle
             self.turret_motor.set(0)
-        elif self.mode == self._Mode.Searching:
-            if self.vision.hasTarget():
-                # if a vision target is found, track it
-                self.mode = self._Mode.TrackingTarget
-            else:
-                # set initial search direction
-                if self.last_mode != self.mode:
-                    self.is_searching_reverse = self._getHeadingInRange() <= 0
-                # search forwards or reverse
-                if self.is_searching_reverse:
-                    self.turret_motor.setOutput(-self.SEARCH_SPEED)
-                else:
-                    self.turret_motor.setOutput(self.SEARCH_SPEED)
-                # switch diections if min or max exceeded
-                if self._getHeadingInRange() <= self.SEARCH_MIN:
-                    self.is_searching_reverse = False
-                elif self._getHeadingInRange() >= self.SEARCH_MAX:
-                    self.is_searching_reverse = True
-        elif self.mode == self._Mode.TrackingTarget:
-            if self.vision.hasTarget():
-                # if a vision target is found, move to it
-                self._setRelativeHeading(-self.vision.getHeading())
-            else:
-                # if no vision target is found, search for one
-                self.mode = self._Mode.Searching
+        elif self.mode == self._Mode.Output:
+            self.turret_motor.set(self.desired_output)
+        elif self.mode == self._Mode.Heading:
+            self._setHeading(self.desired_heading)
+
         self.updateNetworkTables()
-        self.last_mode = self.mode
