@@ -8,7 +8,6 @@ from utils import (
     wheelstate,
 )
 from controls import pidf
-from components import vision
 import numpy as np
 from networktables import NetworkTables
 import logging
@@ -63,17 +62,6 @@ class Chassis:
     VELOCITY_RIGHT_KD = 0
     VELOCITY_RIGHT_KF = 0
 
-    # target tracking pidf gains
-    HEADING_KP = 1
-    HEADING_KI = 0
-    HEADING_KD = 0
-    HEADING_KF = 0
-
-    DISTANCE_KP = 4.5
-    DISTANCE_KI = 0
-    DISTANCE_KD = 0
-    DISTANCE_KF = 0
-
     # joystick control parameters
     JOYSTICK_THROTTLE_SCALAR = 1
     JOYSTICK_ROTATION_SCALAR = 0.5
@@ -83,7 +71,6 @@ class Chassis:
     JOYSTICK_DEADBAND = 0.075
 
     # required components
-    vision: vision.Vision
 
     # required devices
     drive_master_left: lazytalonfx.LazyTalonFX
@@ -95,7 +82,6 @@ class Chassis:
         Idle = 0
         PercentOutput = 1
         Velocity = 2
-        Vision = 3
 
     def __init__(self):
         self.mode = self._Mode.Idle
@@ -115,25 +101,6 @@ class Chassis:
 
     # TODO delete this function
     def setupPIDF(self):
-        self.heading_pidf = pidf.PIDF(
-            self.vision.HEADING_DESIRED,
-            self.HEADING_KP,
-            self.HEADING_KI,
-            self.HEADING_KD,
-            self.HEADING_KF,
-            True,
-            -np.pi,
-            np.pi,
-        )
-        self.heading_pidf.setOutputRange(-0.4, 0.4)
-        self.distance_pidf = pidf.PIDF(
-            self.vision.DISTANCE_DESIRED,
-            self.DISTANCE_KP,
-            self.DISTANCE_KI,
-            self.DISTANCE_KD,
-            self.DISTANCE_KF,
-        )
-        self.distance_pidf.setOutputRange(-1, 1)
         self.drive_master_left.setPIDF(
             0,
             self.VELOCITY_LEFT_KP,
@@ -186,9 +153,6 @@ class Chassis:
     def on_disable(self):
         self.stop()
 
-    def isAligning(self):
-        return self.mode == self._Mode.Vision
-
     def setOutput(self, output_l: float, output_r: float) -> None:
         """Set the output of the motors."""
         self.mode = self._Mode.PercentOutput
@@ -230,10 +194,6 @@ class Chassis:
         velocity_r = velocity * self.TRACK_RADIUS
         self.setVelocity(velocity_l, velocity_r)
 
-    def trackTarget(self) -> None:
-        """Track the vision target and drive to it."""
-        self.mode = self._Mode.Vision
-
     def stop(self) -> None:
         """Stop all motor output."""
         self.mode = self._Mode.Idle
@@ -247,28 +207,6 @@ class Chassis:
         """Set the motors to coast mode."""
         self.drive_master_left.setCoastMode()
         self.drive_master_right.setCoastMode()
-
-    def _computeFF(self) -> drivesignal.DriveSignal:
-        self.feedforward.left = (
-            self.drive_characterization_left.calculate(
-                self.desired_velocity.left, self.desired_acceleration.left
-            )
-            / 12
-        )
-        self.feedforward.right = (
-            self.drive_characterization_right.calculate(
-                self.desired_velocity.right, self.desired_acceleration.right
-            )
-            / 12
-        )
-
-    def _computeAcceleration(self, dt: float):
-        self.desired_acceleration.left = (
-            self.desired_velocity.left - self.wheel_velocity.left
-        ) / dt
-        self.desired_acceleration.right = (
-            self.desired_velocity.right - self.wheel_velocity.right
-        ) / dt
 
     def updateNetworkTables(self):
         self.nt.putValue("wheel_position_left", self.wheel_position.left)
@@ -320,11 +258,25 @@ class Chassis:
             self.drive_master_right.setOutput(self.desired_output.right)
         elif self.mode == self._Mode.Velocity:
             # set the velocity of the motors
-            # self.desired_velocity.left = self.DESIRED_TEST
-            # self.desired_velocity.right = self.DESIRED_TEST
+            self.desired_acceleration.left = (
+                self.desired_velocity.left - self.wheel_velocity.left
+            ) / dt
+            self.desired_acceleration.right = (
+                self.desired_velocity.right - self.wheel_velocity.right
+            ) / dt
 
-            self._computeAcceleration(dt)
-            self._computeFF()
+            self.feedforward.left = (
+                self.drive_characterization_left.calculate(
+                    self.desired_velocity.left, self.desired_acceleration.left
+                )
+                / 12
+            )
+            self.feedforward.right = (
+                self.drive_characterization_right.calculate(
+                    self.desired_velocity.right, self.desired_acceleration.right
+                )
+                / 12
+            )
 
             self.drive_master_left.setVelocity(
                 self.desired_velocity.left * self.RADIANS_PER_METER,
@@ -334,37 +286,7 @@ class Chassis:
                 self.desired_velocity.right * self.RADIANS_PER_METER,
                 self.feedforward.right,
             )
-        elif self.mode == self._Mode.Vision:
-            # calculate pidf outputs
-            distance = self.vision.getDistance()
-            # logging.info(distance_error)
-            heading = self.vision.getHeading()
 
-            distance_adjust = self.distance_pidf.update(distance, dt)
-            heading_adjust = self.heading_pidf.update(heading, dt)
-
-            # calculate wheel velocities and set motor outputs
-            self.desired_velocity.left = distance_adjust + heading_adjust
-            self.desired_velocity.right = distance_adjust - heading_adjust
-
-            self._computeAcceleration(dt)
-            self._computeFF()
-            if self.vision.isChassisReady():
-                self.drive_master_left.setBreakMode()
-                self.drive_master_right.setBreakMode()
-                self.drive_master_left.setOutput(0)
-                self.drive_master_right.setOutput(0)
-            else:
-                self.drive_master_left.setCoastMode()
-                self.drive_master_right.setCoastMode()
-                self.drive_master_left.setVelocity(
-                    self.desired_velocity.left * self.RADIANS_PER_METER,
-                    self.feedforward.left,
-                )
-                self.drive_master_right.setVelocity(
-                    self.desired_velocity.right * self.RADIANS_PER_METER,
-                    self.feedforward.right,
-                )
         self.prev_time = cur_time
 
         self.prev_wheel_position.left = self.wheel_position.left
