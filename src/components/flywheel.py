@@ -2,9 +2,16 @@ import rev
 from magicbot import tunable
 from wpilib import controller
 from networktables import NetworkTables
+from utils import units
+import numpy as np
 
 
 class Flywheel:
+
+    # physical constants
+    GEAR_RATIO = 30 / 56
+    INPUTS_PER_OUTPUT = GEAR_RATIO
+    OUTPUTS_PER_INPUT = 1 / GEAR_RATIO
 
     # motor config
     INVERTED = True
@@ -28,7 +35,12 @@ class Flywheel:
 
     # TODO remove
     DESIRED_RPM = tunable(0)
-    
+
+    DISTANCES = (
+        np.array((6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)) * units.meters_per_foot
+    )
+    RPMS = (4620, 4620, 4390, 4200, 4250, 4300, 4220, 4300, 4330, 4350, 4360)
+
     # required devices
     flywheel_motor_left: rev.CANSparkMax
 
@@ -73,6 +85,10 @@ class Flywheel:
         self.is_spinning = True
         self.desired_rpm = rpm
 
+    def setDistance(self, distance):
+        desired_rpm = np.interp(distance, self.DISTANCES, self.RPMS)
+        self.setRPM(desired_rpm)
+
     def stop(self) -> None:
         """Stop the flywheel."""
         self.is_spinning = False
@@ -98,21 +114,26 @@ class Flywheel:
     def updateNetworkTables(self):
         """Update network table values related to component."""
         self.nt.putNumber("desired_rpm", self.desired_rpm)
-        self.nt.putNumber("desired_accel", self.desired_rpm)
+        self.nt.putNumber("desired_accel", self.desired_acceleration)
         self.nt.putNumber("feedforward", self.feedforward)
-        self.nt.putNumber("actual_rpm", self.encoder.getVelocity())
+        self.nt.putNumber(
+            "actual_rpm", self.encoder.getVelocity() * self.OUTPUTS_PER_INPUT
+        )
 
     def execute(self):
         # TODO remove
         self.desired_rpm = self.DESIRED_RPM
-        
+
         # calculate feedword terms
         self._calculateFF()
 
         if self.is_spinning:
             # set the flywheel at the desired rpm
             self.flywheel_pid.setReference(
-                self.desired_rpm, rev.ControlType.kVelocity, 0, self.feedforward
+                self.desired_rpm * self.INPUTS_PER_OUTPUT,
+                rev.ControlType.kVelocity,
+                0,
+                self.feedforward,
             )
         else:
             # stop the flywheel
