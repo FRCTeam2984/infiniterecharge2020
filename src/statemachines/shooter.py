@@ -50,13 +50,13 @@ class Shooter(StateMachine):
 
         # if a vision target is found, track it
         if self.vision.hasTarget():
-            self.next_state("trackTarget")
+            self.next_state("trackTargetAndSpinFlywheel")
 
     @state
     def trackTargetAndSpinFlywheel(self, initial_call):
         if self.vision.hasTarget():
             heading_error = self.vision.getHeading()
-            self.turret.setRelativeHeading(heading_error)
+            self.turret.setRelativeHeading(-heading_error)
             if self.turret.isReady():
                 self.next_state("spinFlywheel")
 
@@ -65,22 +65,22 @@ class Shooter(StateMachine):
 
     @state
     def spinFlywheel(self, initial_call):
-        if initial_call:
-            distance = self.vision.getDistance()
-            self.flywheel.setDistance(distance)
-        if self.flywheel.isReady():
-            self.next_state("feedBalls")
+        # if initial_call:
+        distance = self.vision.getDistance()
+        self.flywheel.setDistance(distance)
+    # if self.flywheel.isReady():
+            # self.next_state("feedBalls")
 
-    @timed_state(duration=10)
-    def feedBalls(self, initial_call):
-        if not self.flywheel.isReady():
-            self.tower.stop()
-            self.next_state("spinFlywheel")
-        else:
-            self.tower.lift()
+    # @timed_state(duration=10)
+    # def feedBalls(self, initial_call):
+    #     if not self.flywheel.isReady():
+    #         self.tower.stop()
+    #         self.next_state("spinFlywheel")
+    #     else:
+    #         self.tower.lift()
 
     def done(self):
         super().done()
         self.tower.stop()
         self.turret.stop()
-        self.flywheel.stop()
+        # self.flywheel.stop()

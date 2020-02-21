@@ -35,7 +35,7 @@ class Turret:
     TURRET_KD = 0
     TURRET_KF = 0.08
     TURRET_IZONE = 2 * units.radians_per_degree
-
+    HEADING_TOLERANCE = 0.5 * units.radians_per_degree
     # motion magic config values
     TURRET_MOTION_MAGIC_VELOCITY = tunable(
         90 * units.radians_per_degree * INPUT_PER_OUTPUT
@@ -123,6 +123,7 @@ class Turret:
         return self.turret_motor.getPosition() * self.OUTPUT_PER_INPUT
 
     def setOutput(self, output: float) -> None:
+        self.mode = self._Mode.Output
         self.desired_output = output
 
     def setRelativeHeading(self, heading: float) -> None:
