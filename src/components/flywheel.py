@@ -1,10 +1,10 @@
 import numpy as np
-from networktables import NetworkTables
-
 import rev
 from magicbot import tunable
-from utils import units
+from networktables import NetworkTables
 from wpilib import controller
+
+from utils import units
 
 
 class Flywheel:
@@ -43,7 +43,7 @@ class Flywheel:
     )
     RPMS = (2430, 2460, 2480, 2530, 2610, 2620, 2670, 2700, 2740, 2760)
     ACCURACY = (1, 1, 1, 1, 0.5, 0.5, 0.5, 0, 0, 0)
-    
+
     # required devices
     flywheel_motor_left: rev.CANSparkMax
 

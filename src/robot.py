@@ -2,8 +2,9 @@
 
 import rev
 import wpilib
-from components import chassis, flywheel, intake, leds, tower, turret, vision
 from magicbot import MagicRobot
+
+from components import chassis, flywheel, intake, leds, tower, turret, vision
 from statemachines import alignchassis, shooter
 from utils import lazypigeonimu, lazytalonfx, lazytalonsrx
 

@@ -1,7 +1,7 @@
+from magicbot.state_machine import StateMachine, state
 from networktables import NetworkTables
 
 from components import chassis, flywheel, tower, turret, vision
-from magicbot.state_machine import StateMachine, state, timed_state
 from utils import units
 
 
@@ -68,8 +68,9 @@ class Shooter(StateMachine):
         # if initial_call:
         distance = self.vision.getDistance()
         self.flywheel.setDistance(distance)
+
     # if self.flywheel.isReady():
-            # self.next_state("feedBalls")
+    # self.next_state("feedBalls")
 
     # @timed_state(duration=10)
     # def feedBalls(self, initial_call):

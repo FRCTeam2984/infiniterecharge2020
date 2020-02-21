@@ -1,10 +1,10 @@
 import numpy as np
+import wpilib
+from magicbot.state_machine import StateMachine, state
 from networktables import NetworkTables
 
-import wpilib
-from components import chassis, turret, vision, flywheel
+from components import chassis, flywheel, turret, vision
 from controls import pidf
-from magicbot.state_machine import StateMachine, state
 from utils import drivesignal, lazypigeonimu, units
 
 
@@ -199,10 +199,6 @@ class AlignChassis(StateMachine):
 
     def execute(self):
         super().execute()
-        self.nt.putNumber(
-            "allocentric_heading",
-            self.getAllocentricHeading() * units.degrees_per_radian,
-        )
         self.nt.putNumber("desired_velocity_left", self.desired_velocity.left)
         self.nt.putNumber("desired_velocity_right", self.desired_velocity.right)
         self.nt.putNumber("distance_adjust", self.distance_adjust)
@@ -216,4 +212,3 @@ class AlignChassis(StateMachine):
         #     "alignment_target",
         #     self.getAlignmentTargetDistance() * units.inches_per_meter,
         # )
-

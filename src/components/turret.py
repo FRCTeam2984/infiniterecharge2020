@@ -1,10 +1,10 @@
 import logging
 from enum import Enum
 
+from magicbot import tunable
 from networktables import NetworkTables
 
 from components import vision
-from magicbot import tunable
 from utils import lazypigeonimu, lazytalonsrx, units
 
 
