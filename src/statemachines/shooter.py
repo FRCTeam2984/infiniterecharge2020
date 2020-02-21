@@ -1,4 +1,4 @@
-from magicbot.state_machine import StateMachine, state
+from magicbot.state_machine import StateMachine, state, timed_state
 from networktables import NetworkTables
 
 from components import chassis, flywheel, tower, turret, vision
