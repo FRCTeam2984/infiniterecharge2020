@@ -11,8 +11,8 @@ class Flywheel:
 
     # physical constants
     GEAR_RATIO = 30 / 56
-    INPUTS_PER_OUTPUT = GEAR_RATIO
-    OUTPUTS_PER_INPUT = 1 / GEAR_RATIO
+    INPUTS_PER_OUTPUT = 1
+    OUTPUTS_PER_INPUT = 1
 
     # motor config
     INVERTED = True
@@ -20,16 +20,16 @@ class Flywheel:
     OPEN_LOOP_RAMP = 2.5
 
     # motor coefs
-    FLYWHEEL_KS = 0.0574  # V
+    FLYWHEEL_KS = 0.491  # V
     FLYWHEEL_KV = 0.002183  # V / (rpm)
-    FLYWHEEL_KA = 0.00102  # V / (rpm / s)
+    FLYWHEEL_KA = 0.00112  # V / (rpm / s)
 
     # flywheel pidf gains
     FLYWHEEL_KP = tunable(0)
-    FLYWHEEL_KI = tunable(0)
+    FLYWHEEL_KI = tunable(0.00000025)
     FLYWHEEL_KD = tunable(0)
     FLYWHEEL_KF = tunable(0)
-    FLYWHEEL_IZONE = tunable(0)
+    FLYWHEEL_IZONE = tunable(300)
 
     # percent of setpoint
     RPM_TOLERANCE = 0.05
@@ -38,10 +38,12 @@ class Flywheel:
     DESIRED_RPM = tunable(0)
 
     DISTANCES = (
-        np.array((6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)) * units.meters_per_foot
+        np.array((120, 132, 144, 156, 168, 180, 192, 204, 216, 228))
+        * units.meters_per_inch
     )
-    RPMS = (4620, 4620, 4390, 4200, 4250, 4300, 4220, 4300, 4330, 4350, 4360)
-
+    RPMS = (2430, 2460, 2480, 2530, 2610, 2620, 2670, 2700, 2740, 2760)
+    ACCURACY = (1, 1, 1, 1, 0.5, 0.5, 0.5, 0, 0, 0)
+    
     # required devices
     flywheel_motor_left: rev.CANSparkMax
 
@@ -123,7 +125,7 @@ class Flywheel:
 
     def execute(self):
         # TODO remove
-        self.desired_rpm = self.DESIRED_RPM
+        # self.desired_rpm = self.DESIRED_RPM
 
         # calculate feedword terms
         self._calculateFF()
