@@ -202,6 +202,7 @@ class Chassis:
         self.drive_master_right.setCoastMode()
 
     def updateNetworkTables(self):
+        """Update network table values related to component."""
         self.nt.putValue("wheel_position_left", self.wheel_position.left)
         self.nt.putValue("wheel_position_right", self.wheel_position.right)
         self.nt.putValue("wheel_velocity_left", self.wheel_velocity.left)

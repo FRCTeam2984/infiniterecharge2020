@@ -123,6 +123,7 @@ class Turret:
         return self.turret_motor.getPosition() * self.OUTPUT_PER_INPUT
 
     def setOutput(self, output: float) -> None:
+        """Set the percent output of the turret."""
         self.mode = self._Mode.Output
         self.desired_output = output
 
@@ -149,6 +150,7 @@ class Turret:
             self.turret_motor.zero(self.SOFT_MIN)
 
     def _setHeading(self, heading: float):
+        """Set the motor position setpoint."""
         heading = units.angle_range(heading)
         if self._isWithinSoftLimits(heading):
             self.turret_motor.setMotionMagicPosition(heading * self.INPUT_PER_OUTPUT)

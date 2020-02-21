@@ -25,13 +25,16 @@ class Shooter(StateMachine):
         self.nt = NetworkTables.getTable("/components/shooter")
 
     def shoot(self):
+        """Enable the statemachine."""
         self.engage()
 
     def isReadyToShoot(self):
+        """Is the turret in position and flywheel up to speed."""
         return self.turret.isReady() and self.flywheel.isReady()
 
     @state(first="True")
     def searchForTarget(self, initial_call):
+        """Slew the turret back and forth until a vision target is found."""
         if initial_call:
             # set initial search direction
             self.is_searching_reverse = self.turret.getHeading() <= 0
@@ -53,32 +56,33 @@ class Shooter(StateMachine):
             self.next_state("trackTargetAndSpinFlywheel")
 
     @state
-    def trackTargetAndSpinFlywheel(self, initial_call):
+    def trackTarget(self, initial_call):
+        """Move the turret to the vision target."""
         if self.vision.hasTarget():
             heading_error = self.vision.getHeading()
             self.turret.setRelativeHeading(-heading_error)
             if self.turret.isReady():
                 self.next_state("spinFlywheel")
-
         else:
             self.next_state("searchForTarget")
 
     @state
     def spinFlywheel(self, initial_call):
+        """Spin the flywheel based on the distance to target."""
         # if initial_call:
         distance = self.vision.getDistance()
         self.flywheel.setDistance(distance)
+        # if self.flywheel.isReady():
+            # self.next_state("feedBalls")
 
-    # if self.flywheel.isReady():
-    # self.next_state("feedBalls")
-
-    # @timed_state(duration=10)
-    # def feedBalls(self, initial_call):
-    #     if not self.flywheel.isReady():
-    #         self.tower.stop()
-    #         self.next_state("spinFlywheel")
-    #     else:
-    #         self.tower.lift()
+    @timed_state(duration=10)
+    def feedBalls(self, initial_call):
+        """Feed balls into the shooter."""
+        if not self.flywheel.isReady():
+            self.tower.stop()
+            self.next_state("spinFlywheel")
+        else:
+            self.tower.lift()
 
     def done(self):
         super().done()

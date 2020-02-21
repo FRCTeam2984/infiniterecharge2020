@@ -61,6 +61,7 @@ class Vision:
         return distance
 
     def updateNetworkTables(self):
+        """Update network table values related to component."""
         self.nt.putValue("heading", self.getHeading() * units.degrees_per_radian)
         self.nt.putValue("distance", self.getDistance() * units.inches_per_meter)
         self.nt.putValue(

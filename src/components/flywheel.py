@@ -89,6 +89,7 @@ class Flywheel:
         self.desired_rpm = rpm
 
     def setDistance(self, distance):
+        """Interpolate the RPM of the flywheel from the distance to the target."""
         desired_rpm = np.interp(distance, self.DISTANCES, self.RPMS)
         self.setRPM(desired_rpm)
 

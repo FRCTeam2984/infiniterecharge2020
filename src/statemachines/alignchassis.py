@@ -89,6 +89,7 @@ class AlignChassis(StateMachine):
         self.nt = NetworkTables.getTable("/components/alignchassis")
 
     def align(self):
+        """Enable the statemachine."""
         self.engage()
 
     # def getAllocentricHeading(self):
@@ -127,6 +128,7 @@ class AlignChassis(StateMachine):
     #     return np.pi - alpha - self.imu.getHeadingInRange()
 
     def isAligned(self):
+        """Is the chassis at an ok distance and heading."""
         return (
             abs(self.DISTANCE_MIN_OUTPUT - self.vision.getDistance())
             <= self.DISTANCE_TOLERANCE
@@ -149,6 +151,7 @@ class AlignChassis(StateMachine):
 
     @state(first=True)
     def findTarget(self):
+        """Spin in a circle until a vision target is found."""
         if self.vision.hasTarget():
             self.next_state("driveToTarget")
         else:
@@ -156,6 +159,7 @@ class AlignChassis(StateMachine):
 
     @state()
     def driveToTarget(self, initial_call):
+        """Drive to the desired distance while adjusting heading."""
         if initial_call:
             self.prev_time = wpilib.Timer.getFPGATimestamp()
             self.chassis.setCoastMode()
@@ -185,6 +189,7 @@ class AlignChassis(StateMachine):
 
     @state()
     def lockAtTarget(self, initial_call):
+        """Set break mode to lock chassis in place."""
         if initial_call:
             self.chassis.setBreakMode()
         if not self.isAligned():
