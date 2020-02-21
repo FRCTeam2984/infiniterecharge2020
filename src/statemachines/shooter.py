@@ -73,7 +73,7 @@ class Shooter(StateMachine):
         distance = self.vision.getDistance()
         self.flywheel.setDistance(distance)
         # if self.flywheel.isReady():
-            # self.next_state("feedBalls")
+        # self.next_state("feedBalls")
 
     @timed_state(duration=10)
     def feedBalls(self, initial_call):
