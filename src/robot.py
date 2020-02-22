@@ -21,16 +21,16 @@ class Robot(MagicRobot):
     HIGH_TOWER_ID = 7
 
     TURRET_ID = 8
-    FLYWHEEL_LEFT_ID = 9
-    FLYWHEEL_RIGHT_ID = 10
+    FLYWHEEL_SLAVE_ID = 9
+    FLYWHEEL_MASTER_ID = 10
 
-    CLIMB_WINCH_LEFT_ID = 11
-    CLIMB_WINCH_RIGHT_ID = 12
+    CLIMB_WINCH_SLAVE_ID = 11
+    CLIMB_WINCH_MASTER_ID = 12
 
-    BUDDY_WINCH_LEFT_ID = 13
-    BUDDY_WINCH_RIGHT_ID = 14
+    BUDDY_WINCH_SLAVE_ID = 13
+    BUDDY_WINCH_MASTER_ID = 14
 
-    CLIMB_ARM_ID = 15
+    SLIDER_ID = 15
     TROLLEY_ID = 16
 
     chassis: chassis.Chassis
@@ -63,23 +63,23 @@ class Robot(MagicRobot):
         self.turret_motor = lazytalonsrx.LazyTalonSRX(self.TURRET_ID)
         self.turret_motor.setEncoderConfig(lazytalonsrx.CTREMag, True)
 
-        self.flywheel_motor_left = rev.CANSparkMax(
-            self.FLYWHEEL_LEFT_ID, rev.MotorType.kBrushless
+        self.flywheel_master = rev.CANSparkMax(
+            self.FLYWHEEL_MASTER_ID, rev.MotorType.kBrushless
         )
-        # self.flywheel_motor_right = rev.CANSparkMax(
-        #     self.FLYWHEEL_RIGHT_ID, rev.MotorType.kBrushless
+        # self.flywheel_slave = rev.CANSparkMax(
+        #     self.FLYWHEEL_SLAVE_ID, rev.MotorType.kBrushless
         # )
-        # self.flywheel_motor_right.follow(self.flywheel_motor_left, True)
+        # self.flywheel_slave.follow(self.flywheel_master, True)
 
-        self.climb_winch_left = lazytalonsrx.LazyTalonSRX(self.CLIMB_WINCH_LEFT_ID)
-        self.climb_winch_right = lazytalonsrx.LazyTalonSRX(self.CLIMB_WINCH_RIGHT_ID)
-        self.climb_winch_right.follow(self.climb_winch_left)
+        self.climb_winch_slave = lazytalonsrx.LazyTalonSRX(self.CLIMB_WINCH_SLAVE_ID)
+        self.climb_winch_master = lazytalonsrx.LazyTalonSRX(self.CLIMB_WINCH_MASTER_ID)
+        self.climb_winch_slave.follow(self.climb_winch_master)
 
-        self.buddy_winch_left = lazytalonsrx.LazyTalonSRX(self.BUDDY_WINCH_LEFT_ID)
-        self.buddy_winch_right = lazytalonsrx.LazyTalonSRX(self.BUDDY_WINCH_RIGHT_ID)
-        self.buddy_winch_right.follow(self.buddy_winch_left)
+        self.buddy_winch_slave = lazytalonsrx.LazyTalonSRX(self.BUDDY_WINCH_SLAVE_ID)
+        self.buddy_winch_master = lazytalonsrx.LazyTalonSRX(self.BUDDY_WINCH_MASTER_ID)
+        self.buddy_winch_slave.follow(self.buddy_winch_master)
 
-        self.climb_arm = lazytalonsrx.LazyTalonSRX(self.CLIMB_ARM_ID)
+        self.slider_motor = lazytalonsrx.LazyTalonSRX(self.SLIDER_ID)
         self.trolley_motor = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ID)
 
         # setup imu
