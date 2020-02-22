@@ -75,7 +75,7 @@ class Shooter(StateMachine):
         # if self.flywheel.isReady():
         # self.next_state("feedBalls")
 
-    @timed_state(duration=10)
+    @timed_state(duration=5)
     def feedBalls(self, initial_call):
         """Feed balls into the shooter."""
         if not self.flywheel.isReady():
@@ -84,8 +84,14 @@ class Shooter(StateMachine):
         else:
             self.tower.lift()
 
+    def execute(self):
+        super().execute()
+        self.vision.enableLED(True)
+
     def done(self):
         super().done()
         self.tower.stop()
         self.turret.stop()
-        # self.flywheel.stop()
+        self.flywheel.stop()
+        self.vision.enableLED(False)
+

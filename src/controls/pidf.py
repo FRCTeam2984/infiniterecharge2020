@@ -6,7 +6,6 @@ class PIDF:
 
     def __init__(
         self,
-        setpoint: float = 0,
         kp: float = 0,
         ki: float = 0,
         kd: float = 0,
@@ -26,7 +25,7 @@ class PIDF:
         self.integral = 0
         self.derivative = 0
 
-        self.setpoint = setpoint
+        self.setpoint = 0
         self.output = 0
         self.continuous = continuous
 

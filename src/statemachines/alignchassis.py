@@ -17,8 +17,7 @@ class AlignChassis(StateMachine):
     DISTANCE_KF = 0
     DISTANCE_MIN_OUTPUT = -1  # m / s
     DISTANCE_MAX_OUTPUT = 1  # m / s
-    DISTANCE_DESIRED = 144 * units.meters_per_inch
-    DISTANCE_TOLERANCE = 1 * units.meters_per_inch
+    DISTANCE_TOLERANCE = 2 * units.meters_per_inch
 
     HEADING_KP = 1
     HEADING_KI = 0
@@ -49,20 +48,17 @@ class AlignChassis(StateMachine):
         self.distance_adjust = 0
         self.heading_adjust = 0
         self.prev_time = 0
+        self.desired_distance = 0
 
     def setup(self):
         self.distance_pidf = pidf.PIDF(
-            self.DISTANCE_DESIRED,
-            self.DISTANCE_KP,
-            self.DISTANCE_KI,
-            self.DISTANCE_KD,
-            self.DISTANCE_KF,
+            self.DISTANCE_KP, self.DISTANCE_KI, self.DISTANCE_KD, self.DISTANCE_KF,
         )
         self.distance_pidf.setOutputRange(
             self.DISTANCE_MIN_OUTPUT, self.DISTANCE_MAX_OUTPUT
         )
+
         self.heading_pidf = pidf.PIDF(
-            0,
             self.HEADING_KP,
             self.HEADING_KI,
             self.HEADING_KD,
@@ -74,15 +70,9 @@ class AlignChassis(StateMachine):
         self.heading_pidf.setOutputRange(
             self.HEADING_MIN_OUTPUT, self.HEADING_MAX_OUTPUT
         )
+
         self.turn_pidf = pidf.PIDF(
-            0,
-            self.TURN_KP,
-            self.TURN_KI,
-            self.TURN_KD,
-            self.TURN_KF,
-            True,
-            -np.pi,
-            np.pi,
+            self.TURN_KP, self.TURN_KI, self.TURN_KD, self.TURN_KF, True, -np.pi, np.pi,
         )
         self.turn_pidf.setOutputRange(self.TURN_MIN_OUTPUT, self.TURN_MAX_OUTPUT)
 
@@ -130,7 +120,7 @@ class AlignChassis(StateMachine):
     def isAligned(self):
         """Is the chassis at an ok distance and heading."""
         return (
-            abs(self.DISTANCE_MIN_OUTPUT - self.vision.getDistance())
+            abs(self.desired_distance - self.vision.getDistance())
             <= self.DISTANCE_TOLERANCE
         ) and (abs(self.vision.getHeading()) <= self.HEADING_TOLERANCE)
 
@@ -138,7 +128,7 @@ class AlignChassis(StateMachine):
     # def turnToHeading(self, initial_call):
     #     if initial_call:
     #         self.turn_pidf.reset()
-    #         self.turn_pidf.setpoint = desired_heading
+    #         self.turn_pidf.setSetpoint(desired_heading)
     #     dt = 0.02
     #     cur_time = wpilib.Timer.getFPGATimestamp()
     #     heading =  self.imu.getHeadingInRange()
@@ -148,9 +138,9 @@ class AlignChassis(StateMachine):
     #     else:
     #         self.next_state(_next_state)
     #     self.prev_time = cur_time
-
+    
     @state(first=True)
-    def findTarget(self):
+    def findTarget(self, initial_call):
         """Spin in a circle until a vision target is found."""
         if self.vision.hasTarget():
             self.next_state("driveToTarget")
@@ -161,6 +151,15 @@ class AlignChassis(StateMachine):
     def driveToTarget(self, initial_call):
         """Drive to the desired distance while adjusting heading."""
         if initial_call:
+            min_distance = self.flywheel.DISTANCES[0]
+            max_distance = np.max(np.where(self.flywheel.ACCURACY == 1))
+            self.desired_distance = np.clip(
+                min_distance,
+                max_distance,
+                self.vision.getDistance(),
+            )
+            self.heading_pidf.setSetpoint(0)
+            self.distance_pidf.setSetpoint(self.desired_distance)
             self.prev_time = wpilib.Timer.getFPGATimestamp()
             self.chassis.setCoastMode()
 
@@ -201,6 +200,7 @@ class AlignChassis(StateMachine):
         super().done()
         self.chassis.setCoastMode()
         self.chassis.stop()
+        self.vision.enableLED(False)
 
     def execute(self):
         super().execute()
@@ -208,6 +208,7 @@ class AlignChassis(StateMachine):
         self.nt.putNumber("desired_velocity_right", self.desired_velocity.right)
         self.nt.putNumber("distance_adjust", self.distance_adjust)
         self.nt.putNumber("heading_adjust", self.heading_adjust)
+        self.vision.enableLED(True)
 
         # cx, cy = self.getComponentDistanceToPort()
 

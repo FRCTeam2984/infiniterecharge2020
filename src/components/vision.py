@@ -32,6 +32,9 @@ class Vision:
 
     def on_enable(self):
         pass
+    
+    def on_disable(self):
+        self.enableLED(False)
 
     def enableLED(self, value: bool):
         """Toggle the limelight LEDs on or off."""
