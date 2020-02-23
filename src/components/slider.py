@@ -6,7 +6,7 @@ class Slider:
     # speeds to run slider
     EXTEND_SPEED = 0.2
     RETRACT_SPEED = -0.2
-    
+
     # motor config
     INVERTED = False
 

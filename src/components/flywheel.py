@@ -40,8 +40,7 @@ class Flywheel:
     DESIRED_RPM = tunable(0)
 
     DISTANCES = (
-        np.array((10, 11, 12, 13, 14, 15, 16, 17, 18, 19))
-        * units.meters_per_foot
+        np.array((10, 11, 12, 13, 14, 15, 16, 17, 18, 19)) * units.meters_per_foot
     )
     RPMS = (
         np.array((2430, 2460, 2480, 2530, 2610, 2620, 2670, 2700, 2740, 2760))

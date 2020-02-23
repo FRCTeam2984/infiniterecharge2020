@@ -4,8 +4,9 @@ import rev
 import wpilib
 from magicbot import MagicRobot
 
-from components import chassis, flywheel, intake, leds, tower, turret, vision, winch, buddywinch, trolley, slider
-from statemachines import alignchassis, shooter, climb
+from components import (buddywinch, chassis, flywheel, intake, leds, slider,
+                        tower, trolley, turret, vision, winch)
+from statemachines import alignchassis, climb, shooter
 from utils import lazypigeonimu, lazytalonfx, lazytalonsrx
 
 
@@ -48,7 +49,6 @@ class Robot(MagicRobot):
     shooter: shooter.Shooter
     alignchassis: alignchassis.AlignChassis
     climb: climb.Climb
-    
 
     def createObjects(self):
         """Initialize all wpilib motors & sensors"""
@@ -142,7 +142,7 @@ class Robot(MagicRobot):
 
             # # indexer
             # if self.operator.getRawButton(2):
-            #     self.indexer.index()  
+            #     self.indexer.index()
             # else:
             #     self.indexer.stop()
 

@@ -23,7 +23,7 @@ class Shooter(StateMachine):
 
     def on_disable(self):
         self.done()
-        
+
     def setup(self):
         self.nt = NetworkTables.getTable("/components/shooter")
 
@@ -97,4 +97,3 @@ class Shooter(StateMachine):
         self.turret.stop()
         self.flywheel.stop()
         self.vision.enableLED(False)
-

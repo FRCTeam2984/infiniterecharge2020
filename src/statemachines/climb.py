@@ -1,13 +1,10 @@
-import numpy as np
-import wpilib
-from magicbot.state_machine import StateMachine, state, timed_state
+from magicbot.state_machine import StateMachine, timed_state
 from networktables import NetworkTables
 
 from components import slider, winch
 
 
 class Climb(StateMachine):
-
 
     slider: slider.Slider
     winch: winch.Winch
@@ -31,7 +28,7 @@ class Climb(StateMachine):
     def climbUp(self):
         """End the climb."""
         self.engage(initial_state="activateWinch")
-    
+
     @timed_state(duration=5, first=True)
     def extendSlider(self, initial_call):
         """Extend up the slider."""

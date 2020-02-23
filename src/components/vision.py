@@ -32,7 +32,7 @@ class Vision:
 
     def on_enable(self):
         pass
-    
+
     def on_disable(self):
         self.enableLED(False)
 
