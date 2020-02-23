@@ -4,7 +4,7 @@ import rev
 import wpilib
 from magicbot import MagicRobot
 
-from components import chassis, flywheel, intake, leds, tower, turret, vision, winch, buddywinch, trolley
+from components import chassis, flywheel, intake, leds, tower, turret, vision, winch, buddywinch, trolley, slider
 from statemachines import alignchassis, shooter, climb
 from utils import lazypigeonimu, lazytalonfx, lazytalonsrx
 
@@ -39,6 +39,7 @@ class Robot(MagicRobot):
     turret: turret.Turret
     flywheel: flywheel.Flywheel
     vision: vision.Vision
+    slider: slider.Slider
     winch: winch.Winch
     buddywinch: buddywinch.BuddyWinch
     trolley: trolley.Trolley

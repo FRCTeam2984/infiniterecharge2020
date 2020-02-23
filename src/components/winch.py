@@ -10,14 +10,14 @@ class Winch:
     INVERTED = False
 
     # required devices
-    winch_master: lazytalonsrx.LazyTalonSRX
+    climb_winch_master: lazytalonsrx.LazyTalonSRX
 
     def __init__(self):
         self.is_hoisting = False
         self.desired_output = 0
 
     def setup(self):
-        self.winch_master.setInverted(self.INVERTED)
+        self.climb_winch_master.setInverted(self.INVERTED)
 
     def on_enable(self):
         pass
@@ -37,6 +37,6 @@ class Winch:
 
     def execute(self):
         if self.is_hoisting:
-            self.winch_master.setOutput(self.desired_output)
+            self.climb_winch_master.setOutput(self.desired_output)
         else:
-            self.winch_master.setOutput(0)
+            self.climb_winch_master.setOutput(0)

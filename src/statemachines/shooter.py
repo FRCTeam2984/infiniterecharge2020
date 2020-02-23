@@ -20,8 +20,8 @@ class Shooter(StateMachine):
 
     def __init__(self):
         self.is_searching_reverse = False
-        
-    def on_disable():
+
+    def on_disable(self):
         self.done()
         
     def setup(self):

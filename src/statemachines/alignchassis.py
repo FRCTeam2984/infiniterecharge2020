@@ -50,7 +50,7 @@ class AlignChassis(StateMachine):
         self.prev_time = 0
         self.desired_distance = 0
         
-    def on_disable():
+    def on_disable(self):
         self.done()
         
     def setup(self):
