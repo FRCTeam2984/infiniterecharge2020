@@ -46,7 +46,7 @@ class Trolley:
     def lock(self, lock: bool):
         self.is_locked = lock
         if self.is_locked:
-            self.trolley_motor.setBreakMode()
+            self.trolley_motor.setBrakeMode()
         else:
             self.trolley_motor.setCoastMode()
 

@@ -191,10 +191,10 @@ class Chassis:
         """Stop all motor output."""
         self.mode = self._Mode.Idle
 
-    def setBreakMode(self) -> None:
-        """Set the motors to break mode."""
-        self.drive_master_left.setBreakMode()
-        self.drive_master_right.setBreakMode()
+    def setBrakeMode(self) -> None:
+        """Set the motors to brake mode."""
+        self.drive_master_left.setBrakeMode()
+        self.drive_master_right.setBrakeMode()
 
     def setCoastMode(self) -> None:
         """Set the motors to coast mode."""

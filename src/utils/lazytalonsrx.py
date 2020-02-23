@@ -69,7 +69,7 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
             slot, int(izone * self.encoder_config.counts_per_radian), self.TIMEOUT
         )
 
-    def setBreakMode(self):
+    def setBrakeMode(self):
         self.setNeutralMode(self.NeutralMode.Brake)
 
     def setCoastMode(self):

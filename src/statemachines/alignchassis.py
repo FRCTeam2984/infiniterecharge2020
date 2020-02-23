@@ -49,10 +49,10 @@ class AlignChassis(StateMachine):
         self.heading_adjust = 0
         self.prev_time = 0
         self.desired_distance = 0
-
-    def on_disable(self):
+        
+    def on_disable():
         self.done()
-
+        
     def setup(self):
         self.distance_pidf = pidf.PIDF(
             self.DISTANCE_KP, self.DISTANCE_KI, self.DISTANCE_KD, self.DISTANCE_KF,
@@ -141,7 +141,7 @@ class AlignChassis(StateMachine):
     #     else:
     #         self.next_state(_next_state)
     #     self.prev_time = cur_time
-
+    
     @state(first=True)
     def findTarget(self, initial_call):
         """Spin in a circle until a vision target is found."""
@@ -157,7 +157,9 @@ class AlignChassis(StateMachine):
             min_distance = self.flywheel.DISTANCES[0]
             max_distance = np.max(np.where(self.flywheel.ACCURACY == 1))
             self.desired_distance = np.clip(
-                min_distance, max_distance, self.vision.getDistance(),
+                min_distance,
+                max_distance,
+                self.vision.getDistance(),
             )
             self.heading_pidf.setSetpoint(0)
             self.distance_pidf.setSetpoint(self.desired_distance)
@@ -189,9 +191,9 @@ class AlignChassis(StateMachine):
 
     @state()
     def lockAtTarget(self, initial_call):
-        """Set break mode to lock chassis in place."""
+        """Set brake mode to lock chassis in place."""
         if initial_call:
-            self.chassis.setBreakMode()
+            self.chassis.setBrakeMode()
         if not self.isAligned():
             self.next_state("driveToTarget")
         else:
