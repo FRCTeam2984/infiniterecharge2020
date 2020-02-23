@@ -49,7 +49,10 @@ class AlignChassis(StateMachine):
         self.heading_adjust = 0
         self.prev_time = 0
         self.desired_distance = 0
-
+        
+    def on_disable():
+        self.done()
+        
     def setup(self):
         self.distance_pidf = pidf.PIDF(
             self.DISTANCE_KP, self.DISTANCE_KI, self.DISTANCE_KD, self.DISTANCE_KF,

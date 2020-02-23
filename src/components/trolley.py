@@ -1,10 +1,14 @@
 from utils import lazytalonsrx
-
+import numpy as np
 
 class Trolley:
 
     # motor config
     INVERTED = False
+
+    # joystick config
+    JOYSTICK_SCALAR = 0.5
+    JOYSTICK_DEADBAND = 0.05
 
     # required devices
     trolley_motor: lazytalonsrx.LazyTalonSRX
@@ -12,6 +16,7 @@ class Trolley:
     def __init__(self):
         self.is_moving = False
         self.desired_output = 0
+        self.is_locked = False
 
     def setup(self):
         self.trolley_motor.setInverted(self.INVERTED)
@@ -22,6 +27,12 @@ class Trolley:
     def on_disable(self):
         self.stop()
 
+    def setFromJoystick(self, output: float) -> None:
+        """Set percent output of the slider motor from joystick input."""
+        output *= self.JOYSTICK_SCALAR
+        output = 0 if abs(output) <= self.JOYSTICK_DEADBAND else output
+        self.setOutput(output)
+
     def setOutput(self, output: float) -> None:
         """Set percent output of the slider motor."""
         self.is_moving = True
@@ -31,6 +42,16 @@ class Trolley:
         """Stop trolley motor."""
         self.is_moving = False
         self.desired_output = 0
+
+    def lock(self, lock: bool):
+        self.is_locked = lock
+        if self.is_locked:
+            self.trolley_motor.setBreakMode()
+        else:
+            self.trolley_motor.setCoastMode()
+
+    def isLocked(self):
+        return self.is_locked
 
     def execute(self):
         if self.is_moving:

@@ -20,7 +20,10 @@ class Shooter(StateMachine):
 
     def __init__(self):
         self.is_searching_reverse = False
-
+        
+    def on_disable():
+        self.done()
+        
     def setup(self):
         self.nt = NetworkTables.getTable("/components/shooter")
 
