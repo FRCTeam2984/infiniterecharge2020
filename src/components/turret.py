@@ -153,6 +153,7 @@ class Turret:
         """Set the motor position setpoint."""
         heading = units.angle_range(heading)
         if self._isWithinSoftLimits(heading):
+            # TODO use regular PID?
             self.turret_motor.setMotionMagicPosition(heading * self.INPUT_PER_OUTPUT)
         else:
             logging.warning(

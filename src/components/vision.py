@@ -24,6 +24,7 @@ class Vision:
 
     def __init__(self):
         self.limelight = NetworkTables.getTable("limelight")
+        self.is_led_enabled = False
 
     def setup(self):
         self.nt = NetworkTables.getTable(
@@ -36,11 +37,14 @@ class Vision:
     def on_disable(self):
         self.enableLED(False)
 
-    def enableLED(self, value: bool):
+    def enableLED(self, value: bool) -> None:
         """Toggle the limelight LEDs on or off."""
         mode = 3 if value else 1
         self.nt.putNumber("ledMode", mode)
 
+    def isLEDEnabled(self) -> bool:
+        return self.is_led_enabled
+        
     def hasTarget(self) -> bool:
         """Has the limelight found a valid target."""
         return self.limelight.getNumber("tv", 0) == 1
@@ -74,4 +78,5 @@ class Vision:
         self.nt.putValue("has_target", self.hasTarget())
 
     def execute(self):
+        self.is_led_enabled = self.nt.getNumber("ledMode", 0) == 3
         self.updateNetworkTables()

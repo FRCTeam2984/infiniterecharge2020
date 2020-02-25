@@ -10,7 +10,7 @@ class Shooter(StateMachine):
     # search config
     SEARCH_MIN = -45 * units.radians_per_degree
     SEARCH_MAX = 45 * units.radians_per_degree
-    SEARCH_SPEED = 0.2
+    SEARCH_SPEED = 0.3
 
     chassis: chassis.Chassis
     tower: tower.Tower
@@ -56,7 +56,7 @@ class Shooter(StateMachine):
 
         # if a vision target is found, track it
         if self.vision.hasTarget():
-            self.next_state("trackTargetAndSpinFlywheel")
+            self.next_state("trackTarget")
 
     @state
     def trackTarget(self, initial_call):
@@ -72,15 +72,15 @@ class Shooter(StateMachine):
     @state
     def spinFlywheel(self, initial_call):
         """Spin the flywheel based on the distance to target."""
-        # if initial_call:
         distance = self.vision.getDistance()
         self.flywheel.setDistance(distance)
         # if self.flywheel.isReady():
-        # self.next_state("feedBalls")
+        #     self.next_state("feedBalls")
 
     @timed_state(duration=5)
     def feedBalls(self, initial_call):
         """Feed balls into the shooter."""
+        # TODO handle misalignment
         if not self.flywheel.isReady():
             self.tower.stop()
             self.next_state("spinFlywheel")
