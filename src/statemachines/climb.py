@@ -1,7 +1,7 @@
-from magicbot.state_machine import StateMachine, timed_state
 from networktables import NetworkTables
 
 from components import slider, winch
+from magicbot.state_machine import StateMachine, timed_state
 
 
 class Climb(StateMachine):

@@ -2,10 +2,9 @@
 
 import rev
 import wpilib
-from magicbot import MagicRobot
-
 from components import (buddywinch, chassis, flywheel, intake, leds, slider,
                         tower, trolley, turret, vision, winch)
+from magicbot import MagicRobot
 from statemachines import alignchassis, climb, shooter
 from utils import lazypigeonimu, lazytalonfx, lazytalonsrx
 

@@ -1,10 +1,10 @@
 import numpy as np
+from networktables import NetworkTables
+
 import rev
 from magicbot import tunable
-from networktables import NetworkTables
-from wpilib import controller
-
 from utils import units
+from wpilib import controller
 
 
 class Flywheel:

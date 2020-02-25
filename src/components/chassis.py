@@ -2,9 +2,9 @@ from enum import Enum
 
 import numpy as np
 from networktables import NetworkTables
-from wpilib import Timer, controller
 
 from utils import drivesignal, lazypigeonimu, lazytalonfx, units, wheelstate
+from wpilib import Timer, controller
 
 
 class Chassis:
