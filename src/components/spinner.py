@@ -1,5 +1,6 @@
-from utils import lazytalonsrx
 from enum import IntEnum
+
+from utils import lazytalonsrx
 
 
 class Colors(IntEnum):

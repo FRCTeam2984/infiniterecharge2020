@@ -3,9 +3,9 @@
 import rev
 import wpilib
 from components import (buddywinch, chassis, flywheel, intake, leds, slider,
-                        tower, trolley, turret, vision, winch, spinner)
+                        spinner, tower, trolley, turret, vision, winch)
 from magicbot import MagicRobot
-from statemachines import alignchassis, climb, shooter, disk
+from statemachines import alignchassis, climb, disk, shooter
 from utils import lazypigeonimu, lazytalonfx, lazytalonsrx
 
 
@@ -34,14 +34,13 @@ class Robot(MagicRobot):
 
     SLIDER_ID = 16
     TROLLEY_ID = 17
-    
 
     chassis: chassis.Chassis
     intake: intake.Intake
     tower: tower.Tower
     turret: turret.Turret
     flywheel: flywheel.Flywheel
-    spinner:  spinner.Spinner
+    spinner: spinner.Spinner
     vision: vision.Vision
     slider: slider.Slider
     winch: winch.Winch
@@ -123,7 +122,7 @@ class Robot(MagicRobot):
             #         self.flywheel.stop()
             #     else:
             #         # self.flywheel.setRPM(desired_rpm)
-        
+
             #################
             # real controls #
             #################

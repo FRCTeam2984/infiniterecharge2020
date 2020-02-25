@@ -44,7 +44,7 @@ class Vision:
 
     def isLEDEnabled(self) -> bool:
         return self.is_led_enabled
-        
+
     def hasTarget(self) -> bool:
         """Has the limelight found a valid target."""
         return self.limelight.getNumber("tv", 0) == 1

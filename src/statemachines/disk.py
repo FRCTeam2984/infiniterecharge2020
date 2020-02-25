@@ -1,7 +1,7 @@
 from networktables import NetworkTables
 
-from components.spinner import Spinner, Colors
-from magicbot.state_machine import StateMachine, timed_state
+from components.spinner import Colors, Spinner
+from magicbot.state_machine import StateMachine
 
 
 class Disk(StateMachine):
@@ -13,7 +13,7 @@ class Disk(StateMachine):
 
     def __init__(self):
         pass
-    
+
     def on_disable(self):
         self.done()
 
@@ -23,7 +23,6 @@ class Disk(StateMachine):
         self.desired_color = Colors.UNKOWN
         self.color_count = 0
         self.nt = NetworkTables.getTable("/components/disk")
-
 
     def rotationControl(self):
         """Start stage two (spin 3-5 times)."""
@@ -60,8 +59,6 @@ class Disk(StateMachine):
 
         if self.desired_color == self.color:
             self.done()
-
-
 
     def done(self):
         super().done()
