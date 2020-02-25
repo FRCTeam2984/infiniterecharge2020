@@ -3,9 +3,9 @@
 import rev
 import wpilib
 from components import (buddywinch, chassis, flywheel, intake, leds, slider,
-                        tower, trolley, turret, vision, winch)
+                        tower, trolley, turret, vision, winch, spinner)
 from magicbot import MagicRobot
-from statemachines import alignchassis, climb, shooter
+from statemachines import alignchassis, climb, shooter, disk
 from utils import lazypigeonimu, lazytalonfx, lazytalonsrx
 
 
@@ -24,20 +24,24 @@ class Robot(MagicRobot):
     FLYWHEEL_SLAVE_ID = 9
     FLYWHEEL_MASTER_ID = 10
 
-    CLIMB_WINCH_SLAVE_ID = 11
-    CLIMB_WINCH_MASTER_ID = 12
+    SPINNER_ID = 11
 
-    BUDDY_WINCH_SLAVE_ID = 13
-    BUDDY_WINCH_MASTER_ID = 14
+    CLIMB_WINCH_SLAVE_ID = 12
+    CLIMB_WINCH_MASTER_ID = 13
 
-    SLIDER_ID = 15
-    TROLLEY_ID = 16
+    BUDDY_WINCH_SLAVE_ID = 14
+    BUDDY_WINCH_MASTER_ID = 15
+
+    SLIDER_ID = 16
+    TROLLEY_ID = 17
+    
 
     chassis: chassis.Chassis
     intake: intake.Intake
     tower: tower.Tower
     turret: turret.Turret
     flywheel: flywheel.Flywheel
+    spinner:  spinner.Spinner
     vision: vision.Vision
     slider: slider.Slider
     winch: winch.Winch
@@ -48,6 +52,7 @@ class Robot(MagicRobot):
     shooter: shooter.Shooter
     alignchassis: alignchassis.AlignChassis
     climb: climb.Climb
+    disk: disk.Disk
 
     def createObjects(self):
         """Initialize all wpilib motors & sensors"""
@@ -76,6 +81,8 @@ class Robot(MagicRobot):
         #     self.FLYWHEEL_SLAVE_ID, rev.MotorType.kBrushless
         # )
         # self.flywheel_slave.follow(self.flywheel_master, True)
+
+        self.spinner_motor = lazytalonsrx.LazyTalonSRX(self.SPINNER_ID)
 
         self.climb_winch_slave = lazytalonsrx.LazyTalonSRX(self.CLIMB_WINCH_SLAVE_ID)
         self.climb_winch_master = lazytalonsrx.LazyTalonSRX(self.CLIMB_WINCH_MASTER_ID)
@@ -115,8 +122,8 @@ class Robot(MagicRobot):
             #     if self.flywheel.is_spinning:
             #         self.flywheel.stop()
             #     else:
-            #         # self.flywheel.setRPM(zdesired_rpm)
-
+            #         # self.flywheel.setRPM(desired_rpm)
+        
             #################
             # real controls #
             #################
@@ -131,6 +138,13 @@ class Robot(MagicRobot):
             #     throttle = self.driver.getY()
             #     rotation = self.driver.getZ()
             #     self.chassis.setFromJoystick(throttle, rotation)
+
+            # # disk stage one
+            # if self.operator.getRawButton(5):
+            #     self.disk.rotationControl()
+            # # disk stage two
+            # if self.operator.getRawButton(6):
+            #     self.disk.positionControl()
 
             ############
             # operator #
@@ -148,13 +162,12 @@ class Robot(MagicRobot):
             # # trolley
             # self.trolley.setFromJoystick(self.operator.getY())
 
-            # climb
-            if self.operator.getRawButton(5):
-                self.climb.reachHook()
-
-            # climb
-            if self.operator.getRawButton(7):
-                self.climb.activateWinch()
+            # # climb
+            # if self.operator.getRawButton(5):
+            #     self.climb.reachHook()
+            # # climb
+            # if self.operator.getRawButton(7):
+            #     self.climb.climbUp()
 
             # # buddy climb
             # if self.operator.getRawButton(7):
