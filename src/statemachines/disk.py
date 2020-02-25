@@ -1,7 +1,7 @@
 from networktables import NetworkTables
 
 from components.spinner import Colors, Spinner
-from magicbot.state_machine import StateMachine
+from magicbot.state_machine import StateMachine, state
 
 
 class Disk(StateMachine):
@@ -32,7 +32,8 @@ class Disk(StateMachine):
         """Start stage three (spin to color)."""
         self.engage(initial_state="spinToColor")
 
-    def spinThreeToFive(self, initial_call):
+    @state(first=True)
+    def spinThreeToFive(self, initial_call,):
         if initial_call:
             self.last_color = self.spinner.getColor()
             self.color_count = 0
@@ -47,7 +48,7 @@ class Disk(StateMachine):
             self.done()
 
         self.last_color = self.color
-
+    @state()
     def spinToColor(self, initial_call):
         if initial_call:
             # TODO get desired color
