@@ -50,7 +50,7 @@ class Flywheel:
     ACCURACY = (1, 1, 1, 1, 0.75, 0.75, 0.75, 0.5, 0.5, 0.5)
 
     # required devices
-    flywheel_master: rev.CANSparkMax
+    flywheel_motor: rev.CANSparkMax
 
     def __init__(self):
         self.is_spinning = False
@@ -59,15 +59,15 @@ class Flywheel:
         self.feedforward = 0
 
     def setup(self):
-        self.flywheel_master.setInverted(self.INVERTED)
-        self.flywheel_master.setOpenLoopRampRate(self.OPEN_LOOP_RAMP)
-        self.flywheel_master.setClosedLoopRampRate(self.CLOSED_LOOP_RAMP)
+        self.flywheel_motor.setInverted(self.INVERTED)
+        self.flywheel_motor.setOpenLoopRampRate(self.OPEN_LOOP_RAMP)
+        self.flywheel_motor.setClosedLoopRampRate(self.CLOSED_LOOP_RAMP)
 
         self.nt = NetworkTables.getTable(
             f"/components/{self.__class__.__name__.lower()}"
         )
-        self.encoder = self.flywheel_master.getEncoder()
-        self.flywheel_pid = self.flywheel_master.getPIDController()
+        self.encoder = self.flywheel_motor.getEncoder()
+        self.flywheel_pid = self.flywheel_motor.getPIDController()
         self.flywheel_pid.setP(self.FLYWHEEL_KP)
         self.flywheel_pid.setI(self.FLYWHEEL_KI)
         self.flywheel_pid.setD(self.FLYWHEEL_KD)
@@ -152,6 +152,6 @@ class Flywheel:
             )
         else:
             # stop the flywheel
-            self.flywheel_master.set(0.0)
+            self.flywheel_motor.set(0.0)
 
         self.updateNetworkTables()

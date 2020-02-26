@@ -2,7 +2,7 @@
 
 import rev
 import wpilib
-from components import (buddywinch, chassis, flywheel, intake, leds, slider,
+from components import ( chassis, flywheel, intake, leds, slider,
                         spinner, tower, trolley, turret, vision, winch)
 from magicbot import MagicRobot
 from statemachines import alignchassis, climb, disk, shooter
@@ -21,19 +21,16 @@ class Robot(MagicRobot):
     HIGH_TOWER_ID = 7
 
     TURRET_ID = 8
-    FLYWHEEL_SLAVE_ID = 9
-    FLYWHEEL_MASTER_ID = 10
 
-    SPINNER_ID = 11
+    FLYWHEEL_MOTOR_ID = 9
 
-    CLIMB_WINCH_SLAVE_ID = 12
-    CLIMB_WINCH_MASTER_ID = 13
+    SPINNER_ID = 10
 
-    BUDDY_WINCH_SLAVE_ID = 14
-    BUDDY_WINCH_MASTER_ID = 15
+    CLIMB_WINCH_SLAVE_ID = 11
+    CLIMB_WINCH_MASTER_ID = 12
 
-    SLIDER_ID = 16
-    TROLLEY_ID = 17
+    SLIDER_ID = 13
+    TROLLEY_ID = 14
 
     chassis: chassis.Chassis
     intake: intake.Intake
@@ -44,7 +41,6 @@ class Robot(MagicRobot):
     vision: vision.Vision
     slider: slider.Slider
     winch: winch.Winch
-    buddywinch: buddywinch.BuddyWinch
     trolley: trolley.Trolley
     leds: leds.LED
 
@@ -73,23 +69,15 @@ class Robot(MagicRobot):
         self.turret_motor = lazytalonsrx.LazyTalonSRX(self.TURRET_ID)
         self.turret_motor.setEncoderConfig(lazytalonsrx.CTREMag, True)
 
-        self.flywheel_master = rev.CANSparkMax(
-            self.FLYWHEEL_MASTER_ID, rev.MotorType.kBrushless
+        self.flywheel_motor = rev.CANSparkMax(
+            self.FLYWHEEL_MOTOR_ID, rev.MotorType.kBrushless
         )
-        # self.flywheel_slave = rev.CANSparkMax(
-        #     self.FLYWHEEL_SLAVE_ID, rev.MotorType.kBrushless
-        # )
-        # self.flywheel_slave.follow(self.flywheel_master, True)
 
         self.spinner_motor = lazytalonsrx.LazyTalonSRX(self.SPINNER_ID)
 
         self.climb_winch_slave = lazytalonsrx.LazyTalonSRX(self.CLIMB_WINCH_SLAVE_ID)
         self.climb_winch_master = lazytalonsrx.LazyTalonSRX(self.CLIMB_WINCH_MASTER_ID)
         self.climb_winch_slave.follow(self.climb_winch_master)
-
-        self.buddy_winch_slave = lazytalonsrx.LazyTalonSRX(self.BUDDY_WINCH_SLAVE_ID)
-        self.buddy_winch_master = lazytalonsrx.LazyTalonSRX(self.BUDDY_WINCH_MASTER_ID)
-        self.buddy_winch_slave.follow(self.buddy_winch_master)
 
         self.slider_motor = lazytalonsrx.LazyTalonSRX(self.SLIDER_ID)
         self.trolley_motor = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ID)
@@ -138,13 +126,6 @@ class Robot(MagicRobot):
             #     rotation = self.driver.getZ()
             #     self.chassis.setFromJoystick(throttle, rotation)
 
-            # # disk stage one
-            # if self.operator.getRawButton(5):
-            #     self.disk.rotationControl()
-            # # disk stage two
-            # if self.operator.getRawButton(6):
-            #     self.disk.positionControl()
-
             ############
             # operator #
             ############
@@ -158,21 +139,22 @@ class Robot(MagicRobot):
             # else:
             #     self.indexer.stop()
 
+            # # disk stage two
+            # if self.operator.getRawButton(7):
+            #     self.disk.rotationControl()
+            # # disk stage three
+            # if self.operator.getRawButton(8):
+            #     self.disk.positionControl()
+
             # # trolley
             # self.trolley.setFromJoystick(self.operator.getY())
 
-            # # climb
+            # # extend hook
             # if self.operator.getRawButton(5):
-            #     self.climb.reachHook()
+            #     self.climb.extendHook()
             # # climb
             # if self.operator.getRawButton(7):
-            #     self.climb.climbUp()
-
-            # # buddy climb
-            # if self.operator.getRawButton(7):
-            #     self.buddywinch.winch()
-            # else:
-            #     self.buddywinch.stop()
+            #     self.climb.climb()
 
         except:
             self.onException()

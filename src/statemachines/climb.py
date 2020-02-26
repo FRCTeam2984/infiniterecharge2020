@@ -21,16 +21,16 @@ class Climb(StateMachine):
     def setup(self):
         self.nt = NetworkTables.getTable("/components/climb")
 
-    def reachHook(self):
+    def extendHook(self):
         """Start the climb."""
-        self.engage(initial_state="extendSlider")
+        self.engage(initial_state="moveSlider")
 
-    def climbUp(self):
+    def climb(self):
         """End the climb."""
         self.engage(initial_state="activateWinch")
 
     @timed_state(duration=5, first=True)
-    def extendSlider(self, initial_call):
+    def moveSlider(self, initial_call):
         """Extend up the slider."""
         self.slider.extend()
 
