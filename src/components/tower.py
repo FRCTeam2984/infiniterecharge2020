@@ -1,18 +1,23 @@
 from utils import lazytalonsrx
+from magicbot import tunable
 
 
 class Tower:
 
     # speeds at which to run motors
-    LOW_TOWER_SPEED = 0.5
-    HIGH_TOWER_SPEED = 0.5
+    LOW_TOWER_LIFT_SPEED = tunable(0.5)
+    HIGH_TOWER_LIFT_SPEED = tunable(0.5)
+
+    LOW_TOWER_DESCEND_SPEED = tunable(-0.5)
+    HIGH_TOWER_DESCEND_SPEED = tunable(-0.5)
 
     # required devices
     low_tower_motor: lazytalonsrx.LazyTalonSRX
     high_tower_motor: lazytalonsrx.LazyTalonSRX
 
     def __init__(self):
-        self.is_lifting = False
+        self.desired_output = [0, 0]
+        self.is_moving = False
         self.ball_count = [False, False, False, False]
 
     def on_enable(self):
@@ -23,11 +28,21 @@ class Tower:
 
     def lift(self) -> None:
         """Start lifting up balls."""
-        self.is_lifting = True
+        self.is_moving = True
+        self.desired_output = [self.LOW_TOWER_LIFT_SPEED, self.HIGH_TOWER_LIFT_SPEED]
+
+    def descend(self) -> None:
+        """Start bringing down balls."""
+        self.is_moving = True
+        self.desired_output = [
+            self.LOW_TOWER_DESCEND_SPEED,
+            self.HIGH_TOWER_DESCEND_SPEED,
+        ]
 
     def stop(self) -> None:
         """Stop lifting balls."""
-        self.is_lifting = False
+        self.is_moving = False
+        self.desired_output = [0, 0]
 
     def hasBall(self, index: int) -> bool:
         """Does the tower have a ball at the given index."""
@@ -39,12 +54,12 @@ class Tower:
 
     def execute(self):
         # TODO handle tower
-        if self.is_lifting:
-            self.low_tower_motor.setOutput(self.LOW_TOWER_SPEED)
-            self.high_tower_motor.setOutput(self.HIGH_TOWER_SPEED)
+        if self.is_moving:
+            self.low_tower_motor.setOutput(self.desired_output[0])
+            self.high_tower_motor.setOutput(self.desired_output[1])
         else:
-            self.low_tower_motor.setOutput(0.0)
-            self.high_tower_motor.setOutput(0.0)
+            self.low_tower_motor.setOutput(0)
+            self.high_tower_motor.setOutput(0)
         # TODO track_balls
         if False:  # trigger 0
             self.ball_count[0] = True

@@ -2,8 +2,19 @@
 
 import rev
 import wpilib
-from components import ( chassis, flywheel, intake, leds, slider,
-                        spinner, tower, trolley, turret, vision, winch)
+from components import (
+    chassis,
+    flywheel,
+    intake,
+    leds,
+    slider,
+    spinner,
+    tower,
+    trolley,
+    turret,
+    vision,
+    winch,
+)
 from magicbot import MagicRobot
 from statemachines import alignchassis, climb, disk, shooter
 from utils import lazypigeonimu, lazytalonfx, lazytalonsrx
@@ -96,15 +107,45 @@ class Robot(MagicRobot):
         """Place code here that does things as a result of operator
            actions"""
         try:
-            # TODO remove temp controls
-            if self.operator.getRawButtonPressed(1):
-                if self.flywheel.is_spinning:
-                    self.flywheel.stop()
-                else:
-                    self.flywheel.setRPM(0)
-            if self.operator.getRawButton(2):
-                self.shooter.engage()
+            #############################
+            # TODO remove temp controls #
+            #############################
+            
+            # if self.operator.getRawButtonPressed(1):
+            #     if self.flywheel.is_spinning:
+            #         self.flywheel.stop()
+            #     else:
+            #         self.flywheel.setRPM(0)
+            # if self.operator.getRawButton(2):
+            #     self.shooter.engage()
 
+            if self.operator.getRawButton(5):
+                self.intake.outtake()
+            else:
+                self.intake.stop()
+
+            if self.operator.getRawButton(6):
+                self.intake.intake()
+            else:
+                self.intake.stop()
+
+            if self.operator.getRawButton(7):
+                self.tower.descend()
+            else:
+                self.tower.stop()
+
+            if self.operator.getRawButton(8):
+                self.tower.lift()
+            else:
+                self.tower.stop()
+
+            if self.operator.getRawButton(1):
+                self.flywheel_motor.set(0.4)
+            else:
+                self.flywheel_motor.set(0)
+
+            # if self.operator.getRawButton(2):
+            #     self.shooter.engage()
             # if self.operator.getRawButtonPressed(2):
             #     if self.flywheel.is_spinning:
             #         self.flywheel.stop()
@@ -118,13 +159,13 @@ class Robot(MagicRobot):
             ##########
             # driver #
             ##########
-            # # chassis target tracking
-            # if self.driver.getRawButton(1):
-            #     self.alignchassis.align()
-            # else:
-            #     throttle = self.driver.getY()
-            #     rotation = self.driver.getZ()
-            #     self.chassis.setFromJoystick(throttle, rotation)
+            # chassis target tracking
+            if self.driver.getRawButton(1):
+                self.alignchassis.align()
+            else:
+                throttle = self.driver.getY()
+                rotation = self.driver.getZ()
+                self.chassis.setFromJoystick(throttle, rotation)
 
             ############
             # operator #
