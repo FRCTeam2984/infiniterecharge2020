@@ -1,6 +1,7 @@
 from utils import lazytalonsrx
 from magicbot import tunable
 
+from networktables import NetworkTables
 
 class Intake:
 
@@ -14,6 +15,11 @@ class Intake:
     def __init__(self):
         self.is_taking = False
         self.desired_output = 0
+
+    def setup(self):
+        self.nt = NetworkTables.getTable(
+            f"/components/intake"
+        )
 
     def on_enable(self):
         pass
@@ -36,8 +42,13 @@ class Intake:
         self.is_taking = False
         self.desired_output = 0
 
+    def updateNetworkTables(self):
+        """Update network table values related to component."""
+        self.nt.putNumber("stator_current", self.intake_motor.getStatorCurrent())
+
     def execute(self):
         if self.is_taking:
             self.intake_motor.setOutput(self.desired_output)
         else:
             self.intake_motor.setOutput(0)
+        self.updateNetworkTables()

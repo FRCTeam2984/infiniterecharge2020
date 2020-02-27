@@ -64,7 +64,7 @@ class Flywheel:
         self.flywheel_motor.setClosedLoopRampRate(self.CLOSED_LOOP_RAMP)
 
         self.nt = NetworkTables.getTable(
-            f"/components/{self.__class__.__name__.lower()}"
+            f"/components/flywheel"
         )
         self.encoder = self.flywheel_motor.getEncoder()
         self.flywheel_pid = self.flywheel_motor.getPIDController()

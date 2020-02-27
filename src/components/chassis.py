@@ -89,7 +89,7 @@ class Chassis:
         self.wheel_velocity = wheelstate.WheelState()
         self.heading = 0
         self.nt = NetworkTables.getTable(
-            f"/components/{self.__class__.__name__.lower()}"
+            f"/components/chassis"
         )
 
     # TODO delete this function
@@ -163,7 +163,7 @@ class Chassis:
             rotation ** self.JOYSTICK_ROTATION_EXPONENT
         ) * self.JOYSTICK_ROTATION_SCALAR
 
-        throttle = 0 if abs(throttle) <= self.JOYSTICK_DEADBAND else throttle
+        throttle = 0 if abs(throttle) <= self.JOYSTICK_DEADBAND else -throttle
         rotation = 0 if abs(rotation) <= self.JOYSTICK_DEADBAND else rotation
         output_l = np.clip(
             throttle - rotation, -self.JOYSTICK_MAX_PERCECNT, self.JOYSTICK_MAX_PERCECNT

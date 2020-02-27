@@ -28,7 +28,7 @@ class Vision:
 
     def setup(self):
         self.nt = NetworkTables.getTable(
-            f"/components/{self.__class__.__name__.lower()}"
+            f"/components/vision"
         )
 
     def on_enable(self):

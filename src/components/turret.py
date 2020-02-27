@@ -64,7 +64,7 @@ class Turret:
         self.desired_output = 0
         self.desired_heading = 0
         self.nt = NetworkTables.getTable(
-            f"/components/{self.__class__.__name__.lower()}"
+            f"/components/turret"
         )
 
     def setup(self):
