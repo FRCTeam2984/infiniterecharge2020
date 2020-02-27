@@ -34,8 +34,18 @@ class Shooter(StateMachine):
     def isReadyToShoot(self):
         """Is the turret in position and flywheel up to speed."""
         return self.turret.isReady() and self.flywheel.isReady()
+    
+    @timed_state(first="True", duration=0.5)
+    def unjamBalls(self, initial_call):
+        self.tower.descend()
 
-    @state(first="True")
+    @state()
+    def stopTower(self, initial_call):
+        self.tower.stop()
+        self.next_state("spinFlywheel")
+
+
+    @state()
     def searchForTarget(self, initial_call):
         """Slew the turret back and forth until a vision target is found."""
         if initial_call:
