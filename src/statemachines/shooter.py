@@ -1,7 +1,7 @@
+from magicbot.state_machine import StateMachine, state, timed_state
 from networktables import NetworkTables
 
 from components import chassis, flywheel, tower, turret, vision
-from magicbot.state_machine import StateMachine, state, timed_state
 from utils import units
 
 
@@ -34,7 +34,7 @@ class Shooter(StateMachine):
     def isReadyToShoot(self):
         """Is the turret in position and flywheel up to speed."""
         return self.turret.isReady() and self.flywheel.isReady()
-    
+
     @timed_state(first="True", duration=0.5)
     def unjamBalls(self, initial_call):
         self.tower.descend()
@@ -43,7 +43,6 @@ class Shooter(StateMachine):
     def stopTower(self, initial_call):
         self.tower.stop()
         self.next_state("spinFlywheel")
-
 
     @state()
     def searchForTarget(self, initial_call):

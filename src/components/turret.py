@@ -1,10 +1,10 @@
 import logging
 from enum import Enum
 
+from magicbot import tunable
 from networktables import NetworkTables
 
 from components import vision
-from magicbot import tunable
 from utils import lazypigeonimu, lazytalonsrx, units
 
 
@@ -63,9 +63,7 @@ class Turret:
         self.mode = self._Mode.Idle
         self.desired_output = 0
         self.desired_heading = 0
-        self.nt = NetworkTables.getTable(
-            f"/components/turret"
-        )
+        self.nt = NetworkTables.getTable(f"/components/turret")
 
     def setup(self):
         # self.turret_motor.setStatusFramePeriod(

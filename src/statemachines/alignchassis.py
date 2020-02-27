@@ -1,10 +1,10 @@
 import numpy as np
+import wpilib
+from magicbot.state_machine import StateMachine, state
 from networktables import NetworkTables
 
-import wpilib
 from components import chassis, flywheel, turret, vision
 from controls import pidf
-from magicbot.state_machine import StateMachine, state
 from utils import drivesignal, lazypigeonimu, units
 
 

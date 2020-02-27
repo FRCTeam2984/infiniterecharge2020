@@ -27,9 +27,7 @@ class Vision:
         self.is_led_enabled = False
 
     def setup(self):
-        self.nt = NetworkTables.getTable(
-            f"/components/vision"
-        )
+        self.nt = NetworkTables.getTable(f"/components/vision")
 
     def on_enable(self):
         pass

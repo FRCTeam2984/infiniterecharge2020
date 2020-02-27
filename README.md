@@ -1,8 +1,8 @@
 # infinterecharge2020
-Vikings Robotics's code for InfiniteRecharge 2019
+Vikings Robotics's code for InfiniteRecharge 2020
 
 # Basic setup
-1. Install python 3.5 or newer
+1. Install python 3.8 or newer
 2. Install git
 3. Install pip
 4. Fork the repository that is owned by `frcteam2984`

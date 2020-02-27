@@ -1,7 +1,8 @@
-from utils import lazytalonsrx
 from magicbot import tunable
-
 from networktables import NetworkTables
+
+from utils import lazytalonsrx
+
 
 class Intake:
 
@@ -17,9 +18,7 @@ class Intake:
         self.desired_output = 0
 
     def setup(self):
-        self.nt = NetworkTables.getTable(
-            f"/components/intake"
-        )
+        self.nt = NetworkTables.getTable(f"/components/intake")
 
     def on_enable(self):
         pass

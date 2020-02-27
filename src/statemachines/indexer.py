@@ -1,7 +1,7 @@
+from magicbot.state_machine import StateMachine, state, timed_state
 from networktables import NetworkTables
 
-from components import intake, tower, chassis
-from magicbot.state_machine import StateMachine, state, timed_state
+from components import chassis, intake, tower
 
 
 class Indexer(StateMachine):
@@ -9,7 +9,7 @@ class Indexer(StateMachine):
     UNJAM_DURATION = 0.5
 
     intake: intake.Intake
-    tower:  tower.Tower
+    tower: tower.Tower
     chassis: chassis.Chassis
 
     def __init__(self):
@@ -26,7 +26,7 @@ class Indexer(StateMachine):
 
     def unjam(self):
         self.engage(initial_state="unjamTower")
-        
+
     @state(first=True)
     def intakeBalls(self, initial_call):
         if initial_call:

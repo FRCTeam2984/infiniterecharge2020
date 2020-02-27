@@ -2,21 +2,11 @@
 
 import rev
 import wpilib
-from components import (
-    chassis,
-    flywheel,
-    intake,
-    leds,
-    slider,
-    spinner,
-    tower,
-    trolley,
-    turret,
-    vision,
-    winch,
-)
 from magicbot import MagicRobot
-from statemachines import alignchassis, climb, disk, shooter, indexer
+
+from components import (chassis, flywheel, intake, leds, slider, spinner,
+                        tower, trolley, turret, vision, winch)
+from statemachines import alignchassis, climb, disk, indexer, shooter
 from utils import lazypigeonimu, lazytalonfx, lazytalonsrx
 
 
@@ -111,7 +101,7 @@ class Robot(MagicRobot):
             #############################
             # TODO remove temp controls #
             #############################
-            
+
             # if self.operator.getRawButtonPressed(1):
             #     if self.flywheel.is_spinning:
             #         self.flywheel.stop()
@@ -136,7 +126,7 @@ class Robot(MagicRobot):
 
             if self.operator.getRawButton(5):
                 self.indexer.index()
-                
+
             if self.operator.getRawButton(6):
                 self.indexer.unjam()
 

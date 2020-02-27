@@ -2,9 +2,9 @@ from enum import Enum
 
 import numpy as np
 from networktables import NetworkTables
+from wpilib import Timer, controller
 
 from utils import drivesignal, lazypigeonimu, lazytalonfx, units, wheelstate
-from wpilib import Timer, controller
 
 
 class Chassis:
@@ -88,9 +88,7 @@ class Chassis:
         self.prev_wheel_position = wheelstate.WheelState()
         self.wheel_velocity = wheelstate.WheelState()
         self.heading = 0
-        self.nt = NetworkTables.getTable(
-            f"/components/chassis"
-        )
+        self.nt = NetworkTables.getTable(f"/components/chassis")
 
     # TODO delete this function
     def setupPIDF(self):

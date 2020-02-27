@@ -1,10 +1,10 @@
 import numpy as np
-from networktables import NetworkTables
-
 import rev
 from magicbot import tunable
-from utils import units
+from networktables import NetworkTables
 from wpilib import controller
+
+from utils import units
 
 
 class Flywheel:
@@ -63,9 +63,7 @@ class Flywheel:
         self.flywheel_motor.setOpenLoopRampRate(self.OPEN_LOOP_RAMP)
         self.flywheel_motor.setClosedLoopRampRate(self.CLOSED_LOOP_RAMP)
 
-        self.nt = NetworkTables.getTable(
-            f"/components/flywheel"
-        )
+        self.nt = NetworkTables.getTable(f"/components/flywheel")
         self.encoder = self.flywheel_motor.getEncoder()
         self.flywheel_pid = self.flywheel_motor.getPIDController()
         self.flywheel_pid.setP(self.FLYWHEEL_KP)

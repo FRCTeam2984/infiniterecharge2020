@@ -1,6 +1,7 @@
-from utils import lazytalonsrx
 from magicbot import tunable
 from networktables import NetworkTables
+
+from utils import lazytalonsrx
 
 
 class Tower:
