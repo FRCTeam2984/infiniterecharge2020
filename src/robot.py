@@ -16,14 +16,14 @@ from components import (
     winch,
 )
 from magicbot import MagicRobot
-from statemachines import alignchassis, climb, disk, shooter
+from statemachines import alignchassis, climb, disk, shooter, indexer
 from utils import lazypigeonimu, lazytalonfx, lazytalonsrx
 
 
 class Robot(MagicRobot):
     DRIVE_SLAVE_LEFT_ID = 1
-    DRIVE_MASTER_LEFT_ID = 2
-    DRIVE_SLAVE_RIGHT_ID = 3
+    DRIVE_MASTER_LEFT_ID = 3
+    DRIVE_SLAVE_RIGHT_ID = 2
     DRIVE_MASTER_RIGHT_ID = 4
 
     INTAKE_ID = 5
@@ -59,6 +59,7 @@ class Robot(MagicRobot):
     alignchassis: alignchassis.AlignChassis
     climb: climb.Climb
     disk: disk.Disk
+    indexer: indexer.Indexer
 
     def createObjects(self):
         """Initialize all wpilib motors & sensors"""
@@ -119,30 +120,39 @@ class Robot(MagicRobot):
             # if self.operator.getRawButton(2):
             #     self.shooter.engage()
 
+            # if self.operator.getRawButton(6):
+            #     self.intake.outtake()
+            # elif self.operator.getRawButton(5):
+            #     self.intake.intake()
+            # else:
+            #     self.intake.stop()
+
+            # if self.operator.getRawButton(7):
+            #     self.tower.descend()
+            # elif self.operator.getRawButton(8):
+            #     self.tower.lift()
+            # else:
+            #     self.tower.stop()
+
             if self.operator.getRawButton(5):
-                self.intake.outtake()
-            else:
-                self.intake.stop()
-
+                self.indexer.index()
+                
             if self.operator.getRawButton(6):
-                self.intake.intake()
-            else:
-                self.intake.stop()
-
-            if self.operator.getRawButton(7):
-                self.tower.descend()
-            else:
-                self.tower.stop()
-
-            if self.operator.getRawButton(8):
-                self.tower.lift()
-            else:
-                self.tower.stop()
+                self.indexer.unjam()
 
             if self.operator.getRawButton(1):
-                self.flywheel_motor.set(0.4)
+                self.flywheel_motor.set(0.6)
             else:
                 self.flywheel_motor.set(0)
+
+            # if self.operator.getRawButton(1):
+            #     self.slider.extend()
+            # else:
+            #     self.slider.stop()
+            # if self.operator.getRawButton(2):
+            #     self.climb.winch()
+            # else:
+            #     self.climb.stop()
 
             # if self.operator.getRawButton(2):
             #     self.shooter.engage()
@@ -177,8 +187,6 @@ class Robot(MagicRobot):
             # # indexer
             # if self.operator.getRawButton(2):
             #     self.indexer.index()
-            # else:
-            #     self.indexer.stop()
 
             # # disk stage two
             # if self.operator.getRawButton(7):

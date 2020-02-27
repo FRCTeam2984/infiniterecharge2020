@@ -1,10 +1,12 @@
 from utils import lazytalonsrx
 
+from magicbot import tunable
+
 
 class Winch:
 
     # motor speeds
-    HOIST_SPEED = 0.5
+    HOIST_SPEED = tunable(0.5)
 
     # motor config
     INVERTED = False
