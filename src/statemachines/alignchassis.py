@@ -154,11 +154,12 @@ class AlignChassis(StateMachine):
     def driveToTarget(self, initial_call):
         """Drive to the desired distance while adjusting heading."""
         if initial_call:
-            min_distance = self.flywheel.DISTANCES[0]
-            max_distance = np.max(np.where(self.flywheel.ACCURACY == 1))
-            self.desired_distance = np.clip(
-                min_distance, max_distance, self.vision.getDistance(),
-            )
+            # min_distance = self.flywheel.DISTANCES[0]
+            # max_distance = np.max(np.where(self.flywheel.ACCURACY == 1))
+            # self.desired_distance = np.clip(
+            #     min_distance, max_distance, self.vision.getDistance(),
+            # )
+            self.desired_distance = 15 * units.meters_per_foot
             self.heading_pidf.setSetpoint(0)
             self.distance_pidf.setSetpoint(self.desired_distance)
             self.prev_time = wpilib.Timer.getFPGATimestamp()
@@ -172,7 +173,7 @@ class AlignChassis(StateMachine):
         distance = self.vision.getDistance()
         heading = self.vision.getHeading()
 
-        self.distance_adjust = self.distance_pidf.update(distance, dt)
+        self.distance_adjust = -self.distance_pidf.update(distance, dt)
         self.heading_adjust = self.heading_pidf.update(heading, dt)
 
         # calculate wheel velocities and set motor outputs
