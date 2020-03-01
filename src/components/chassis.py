@@ -4,7 +4,7 @@ import numpy as np
 from networktables import NetworkTables
 from wpilib import Timer, controller
 
-from utils import drivesignal, lazypigeonimu, lazytalonfx, units, wheelstate
+from utils import drivesignal, lazypigeonimu, lazytalonfx, units, wheelstate, joysticks
 
 
 class Chassis:
@@ -31,11 +31,12 @@ class Chassis:
     CLOSED_LOOP_RAMP = 0.5
     OPEN_LOOP_RAMP = 0.5
 
-    STATOR_CURRENT = 40
-    STATOR_TRIGGER = 60
+    # TODO tune current limtis
+    STATOR_CURRENT = 50
+    STATOR_TRIGGER = 50
     STATOR_TIME = 1
 
-    SUPPLY_CURRENT = 40
+    SUPPLY_CURRENT = 50
     SUPPLY_TRIGGER = 60
     SUPPLY_TIME = 1
 
@@ -56,18 +57,19 @@ class Chassis:
     VELOCITY_RIGHT_KF = 0
 
     # joystick control parameters
-    JOYSTICK_THROTTLE_SCALAR = 1
-    JOYSTICK_ROTATION_SCALAR = 0.5
-    JOYSTICK_THROTTLE_EXPONENT = 1
-    JOYSTICK_ROTATION_EXPONENT = 1
-    JOYSTICK_MAX_PERCECNT = 0.5
-    JOYSTICK_DEADBAND = 0.075
+    JOYSTICK_THROTTLE_SLOW = 0.5
+    JOYSTICK_THROTTLE_FAST = 1.3
+    JOYSTICK_ROTATION_SLOW = 0.5
+    JOYSTICK_ROTATION_FAST = 1.3
+    JOYSTICK_DEADBAND = 0.025
 
     # required components
 
     # required devices
     drive_master_left: lazytalonfx.LazyTalonFX
     drive_master_right: lazytalonfx.LazyTalonFX
+    drive_slave_left: lazytalonfx.LazyTalonFX
+    drive_slave_right: lazytalonfx.LazyTalonFX
 
     imu: lazypigeonimu.LazyPigeonIMU
 
@@ -78,7 +80,6 @@ class Chassis:
 
     def __init__(self):
         self.mode = self._Mode.Idle
-
         self.desired_output = drivesignal.DriveSignal()
         self.desired_velocity = drivesignal.DriveSignal()
         self.desired_acceleration = drivesignal.DriveSignal()
@@ -89,6 +90,12 @@ class Chassis:
         self.wheel_velocity = wheelstate.WheelState()
         self.heading = 0
         self.nt = NetworkTables.getTable(f"/components/chassis")
+        self.throttle_limit = joysticks.Piecewise(
+            self.JOYSTICK_THROTTLE_SLOW, self.JOYSTICK_THROTTLE_FAST
+        )
+        self.rotation_limit = joysticks.Piecewise(
+            self.JOYSTICK_ROTATION_SLOW, self.JOYSTICK_ROTATION_FAST
+        )
 
     # TODO delete this function
     def setupPIDF(self):
@@ -111,7 +118,13 @@ class Chassis:
         self.drive_master_left.setInverted(self.LEFT_INVERTED)
         self.drive_master_right.setInverted(self.RIGHT_INVERTED)
 
-        for master in (self.drive_master_left, self.drive_master_right):
+        for master in (
+            self.drive_master_left,
+            self.drive_master_right,
+            self.drive_slave_left,
+            self.drive_slave_right,
+        ):
+            master.configFactoryDefault()
             master.setStatusFramePeriod(
                 lazytalonfx.LazyTalonFX.StatusFrame.Status_2_Feedback0,
                 self.STATUS_FRAME,
@@ -120,12 +133,12 @@ class Chassis:
             master.configOpenloopRamp(self.OPEN_LOOP_RAMP, self.TIMEOUT)
             master.configClosedloopRamp(self.CLOSED_LOOP_RAMP, self.TIMEOUT)
 
-            master.setStatorCurrentLimit(
-                self.STATOR_CURRENT, self.STATOR_TRIGGER, self.STATOR_TIME
-            )
-            master.setSupplyCurrentLimit(
-                self.SUPPLY_CURRENT, self.SUPPLY_TRIGGER, self.SUPPLY_TIME
-            )
+            # master.setStatorCurrentLimit(
+            #     self.STATOR_CURRENT, self.STATOR_TRIGGER, self.STATOR_TIME
+            # )
+            # master.setSupplyCurrentLimit(
+            #     self.SUPPLY_CURRENT, self.SUPPLY_TRIGGER, self.SUPPLY_TIME
+            # )
 
         # drive motor characterizations
         self.drive_characterization_left = controller.SimpleMotorFeedforwardMeters(
@@ -153,22 +166,19 @@ class Chassis:
         self.desired_output.right = output_r
 
     def setFromJoystick(self, throttle: float, rotation: float) -> None:
-        """Set the output of the motors from joystick values."""
         throttle = (
-            throttle ** self.JOYSTICK_THROTTLE_EXPONENT
-        ) * self.JOYSTICK_THROTTLE_SCALAR
+            0
+            if abs(throttle) <= self.JOYSTICK_DEADBAND
+            else -self.throttle_limit.getValue(throttle)
+        )
         rotation = (
-            rotation ** self.JOYSTICK_ROTATION_EXPONENT
-        ) * self.JOYSTICK_ROTATION_SCALAR
+            0
+            if abs(rotation) <= self.JOYSTICK_DEADBAND
+            else self.rotation_limit.getValue(rotation)
+        )
 
-        throttle = 0 if abs(throttle) <= self.JOYSTICK_DEADBAND else -throttle
-        rotation = 0 if abs(rotation) <= self.JOYSTICK_DEADBAND else rotation
-        output_l = np.clip(
-            throttle - rotation, -self.JOYSTICK_MAX_PERCECNT, self.JOYSTICK_MAX_PERCECNT
-        )
-        output_r = np.clip(
-            throttle + rotation, -self.JOYSTICK_MAX_PERCECNT, self.JOYSTICK_MAX_PERCECNT
-        )
+        output_l = throttle - rotation
+        output_r = throttle + rotation
         self.setOutput(output_l, output_r)
 
     def setVelocity(self, velocity_l: float, velocity_r: float) -> None:
@@ -205,7 +215,8 @@ class Chassis:
         self.nt.putValue("wheel_position_right", self.wheel_position.right)
         self.nt.putValue("wheel_velocity_left", self.wheel_velocity.left)
         self.nt.putValue("wheel_velocity_right", self.wheel_velocity.right)
-
+        self.nt.putValue("desired_output_left", self.desired_velocity.left)
+        self.nt.putValue("desired_output_right", self.desired_velocity.right)
         self.nt.putValue("desired_velocity_left", self.desired_velocity.left)
         self.nt.putValue("desired_velocity_right", self.desired_velocity.right)
         self.nt.putValue(
