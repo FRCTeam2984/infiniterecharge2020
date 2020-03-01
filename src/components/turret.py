@@ -15,16 +15,16 @@ class Turret:
     INPUT_PER_OUTPUT = GEAR_RATIO
     OUTPUT_PER_INPUT = 1 / GEAR_RATIO
 
-    SOFT_MIN = -45 * units.radians_per_degree
-    SOFT_MAX = 45 * units.radians_per_degree
+    SOFT_MIN = -70 * units.radians_per_degree
+    SOFT_MAX = 70 * units.radians_per_degree
 
     # motor config
     TIMEOUT = lazytalonsrx.LazyTalonSRX.TIMEOUT
     INVERTED = False
     STATUS_FRAME = 10
 
-    CLOSED_LOOP_RAMP = 0.5
-    OPEN_LOOP_RAMP = 0.5
+    CLOSED_LOOP_RAMP = 0
+    OPEN_LOOP_RAMP = 0
     PEAK_CURRENT = 50
     PEAK_CURRENT_DURATION = 1000
     CONTINUOUS_CURRENT = 25
@@ -36,6 +36,7 @@ class Turret:
     TURRET_KF = 0.08
     TURRET_IZONE = 2 * units.radians_per_degree
     HEADING_TOLERANCE = 0.5 * units.radians_per_degree
+
     # motion magic config values
     TURRET_MOTION_MAGIC_VELOCITY = tunable(
         90 * units.radians_per_degree * INPUT_PER_OUTPUT
@@ -71,6 +72,9 @@ class Turret:
         #     self.STATUS_FRAME,
         #     self.TIMEOUT,
         # )
+        self.turret_motor.setSoftMin(self.SOFT_MIN)
+        self.turret_motor.setSoftMax(self.SOFT_MAX)
+
         self.turret_motor.configOpenloopRamp(self.OPEN_LOOP_RAMP, self.TIMEOUT)
         self.turret_motor.configClosedloopRamp(self.CLOSED_LOOP_RAMP, self.TIMEOUT)
 
@@ -158,6 +162,12 @@ class Turret:
                 f"Trying to set turret at {heading} which is outside of soft limits"
             )
 
+    def _setOutput(self, output: float):
+        if self.getHeading() <= self.SOFT_MIN and output <= 0 or self.getHeading() >= self.SOFT_MAX and output >= 0:
+            self.turret_motor.set(0)
+        else:
+            self.turret_motor.set(output)
+
     def updateNetworkTables(self) -> None:
         """Update network table values related to component."""
         self.nt.putValue("heading", self.getHeading() * units.degrees_per_radian)
@@ -176,7 +186,7 @@ class Turret:
         if self.mode == self._Mode.Idle:
             self.turret_motor.set(0)
         elif self.mode == self._Mode.Output:
-            self.turret_motor.set(self.desired_output)
+            self.turret_motor.setOutput(self.desired_output)
         elif self.mode == self._Mode.Heading:
             self._setHeading(self.desired_heading)
 
