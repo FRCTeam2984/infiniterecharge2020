@@ -2,7 +2,7 @@ import numpy as np
 import rev
 from magicbot import tunable
 from networktables import NetworkTables
-from wpilib import controller
+from wpilib import controller, RobotController
 
 from utils import units
 
@@ -16,38 +16,47 @@ class Flywheel:
 
     # motor config
     INVERTED = True
-    CLOSED_LOOP_RAMP = 2.5
-    OPEN_LOOP_RAMP = 2.5
+    CLOSED_LOOP_RAMP = 0.5
+    OPEN_LOOP_RAMP = 0.5
 
     # motor coefs
     # TODO remove ka?
-    FLYWHEEL_KS = 0.491  # V
-    FLYWHEEL_KV = 0.002183  # V / (rpm)
+    FLYWHEEL_KS = tunable(0.491)  # V
+    FLYWHEEL_KV = tunable(0.00195)  # 0.002183  # V / (rpm)
     FLYWHEEL_KA = 0  # 0.00112  # V / (rpm / s)
 
     # flywheel pidf gains
     # TODO tune
-    FLYWHEEL_KP = tunable(0)
+    FLYWHEEL_KP = tunable(0.0008)
     FLYWHEEL_KI = tunable(0)  # tunable(0.00000025)
     FLYWHEEL_KD = tunable(0)
     FLYWHEEL_KF = tunable(0)
     FLYWHEEL_IZONE = tunable(0)  # tunable(300)
 
     # percent of setpoint
-    RPM_TOLERANCE = 0.05
-
-    # TODO remove
-    DESIRED_RPM = tunable(0)
+    RPM_TOLERANCE = 0.1
 
     DISTANCES = (
-        np.array((10, 11, 12, 13, 14, 15, 16, 17, 18, 19)) * units.meters_per_foot
+        np.array((10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 24, 27, 30, 32))
+        * units.meters_per_foot
     )
     RPMS = (
-        np.array((2430, 2460, 2480, 2530, 2610, 2620, 2670, 2700, 2740, 2760))
-        * OUTPUTS_PER_INPUT
+        4540, # 10
+        4590, # 11
+        4630, # 12
+        4720, # 13
+        4870, # 14
+        4890, # 15
+        4980, # 16
+        5040, # 17
+        5110, # 18
+        5200, # 21
+        5400, # 24
+        5700, # 27
+        5900, # 30
+        6200, # 32
     )
-    # (4540, 4590, 4630, 4720, 4870, 4890, 4980, 5040, 5110, 5150)
-    ACCURACY = (1, 1, 1, 1, 0.75, 0.75, 0.75, 0.5, 0.5, 0.5)
+    # ACCURACY = (1, 1, 1, 1, 0.75, 0.75, 0.75, 0.5, 0.5, 0.5)
 
     # required devices
     flywheel_motor: rev.CANSparkMax
@@ -59,11 +68,11 @@ class Flywheel:
         self.feedforward = 0
 
     def setup(self):
+        self.nt = NetworkTables.getTable(f"/components/flywheel")
         self.flywheel_motor.setInverted(self.INVERTED)
         self.flywheel_motor.setOpenLoopRampRate(self.OPEN_LOOP_RAMP)
         self.flywheel_motor.setClosedLoopRampRate(self.CLOSED_LOOP_RAMP)
 
-        self.nt = NetworkTables.getTable(f"/components/flywheel")
         self.encoder = self.flywheel_motor.getEncoder()
         self.flywheel_pid = self.flywheel_motor.getPIDController()
         self.flywheel_pid.setP(self.FLYWHEEL_KP)
@@ -83,6 +92,9 @@ class Flywheel:
         self.flywheel_pid.setD(self.FLYWHEEL_KD)
         self.flywheel_pid.setFF(self.FLYWHEEL_KF)
         self.flywheel_pid.setIZone(self.FLYWHEEL_IZONE)
+        self.flywheel_characterization = controller.SimpleMotorFeedforwardMeters(
+            self.FLYWHEEL_KS, self.FLYWHEEL_KV, self.FLYWHEEL_KA,
+        )
 
     def on_disable(self):
         self.stop()
@@ -128,15 +140,14 @@ class Flywheel:
 
     def updateNetworkTables(self):
         """Update network table values related to component."""
+        self.nt.putNumber("actual_rpm", self.getVelocity())
+        self.nt.putNumber("is_spinning", self.is_spinning)
         self.nt.putNumber("desired_rpm", self.desired_rpm)
+        self.nt.putNumber("error_rpm", self.getVelocity() - self.desired_rpm)
         self.nt.putNumber("desired_accel", self.desired_acceleration)
         self.nt.putNumber("feedforward", self.feedforward)
-        self.nt.putNumber("actual_rpm", self.getVelocity())
 
     def execute(self):
-        # TODO remove
-        # self.desired_rpm = self.DESIRED_RPM
-
         # calculate feedword terms
         self._calculateFF()
 
