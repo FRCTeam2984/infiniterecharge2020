@@ -1,6 +1,6 @@
 import numpy as np
 from networktables import NetworkTables
-
+from magicbot import tunable
 from utils import units
 
 
@@ -10,17 +10,9 @@ class Vision:
     TARGET_HEIGHT = 90 * units.meters_per_inch
     CAMERA_HEIGHT = 36.75 * units.meters_per_inch
     CAMERA_PITCH = (
-        -2.5 * units.radians_per_degree
+        -1.26055 * units.radians_per_degree
     )  # TODO tune: ty - atan((TARGET_HEIGHT - CAMERA_HEIGHT) / distance)
-    CAMERA_HEADING = -2 * units.radians_per_degree  # TODO tune
-
-    # desired setpoints and tolerances
-    DISTANCE_DESIRED = 144 * units.meters_per_inch
-    DISTANCE_TOLERANCE_FINE = 1 * units.meters_per_inch
-    DISTANCE_TOLERANCE_COARSE = 12 * units.meters_per_inch
-
-    HEADING_DESIRED = 0 * units.radians_per_degree
-    HEADING_TOLERANCE = 1 * units.radians_per_degree
+    CAMERA_HEADING = tunable(-2)  # TODO tune
 
     def __init__(self):
         self.limelight = NetworkTables.getTable("limelight")
@@ -30,7 +22,7 @@ class Vision:
         self.nt = NetworkTables.getTable(f"/components/vision")
 
     def on_enable(self):
-        pass
+        self.enableLED(False)
 
     def on_disable(self):
         self.enableLED(False)
@@ -38,7 +30,7 @@ class Vision:
     def enableLED(self, value: bool) -> None:
         """Toggle the limelight LEDs on or off."""
         mode = 3 if value else 1
-        self.nt.putNumber("ledMode", mode)
+        self.limelight.putNumber("ledMode", mode)
 
     def isLEDEnabled(self) -> bool:
         return self.is_led_enabled
@@ -67,14 +59,13 @@ class Vision:
 
     def updateNetworkTables(self):
         """Update network table values related to component."""
-        self.nt.putValue("heading", self.getHeading() * units.degrees_per_radian)
-        self.nt.putValue("distance", self.getDistance() * units.inches_per_meter)
-        self.nt.putValue(
+        self.nt.putNumber("heading", self.getHeading() * units.degrees_per_radian)
+        self.nt.putNumber("distance", self.getDistance() * units.inches_per_meter)
+        self.nt.putNumber(
             "distance_in_bananas", self.getDistance() * units.bananas_per_meter
         )
-        self.nt.putValue("pitch", self.getPitch() * units.degrees_per_radian)
-        self.nt.putValue("has_target", self.hasTarget())
+        self.nt.putNumber("has_target", self.hasTarget())
 
     def execute(self):
-        self.is_led_enabled = self.nt.getNumber("ledMode", 0) == 3
+        self.is_led_enabled = self.limelight.getNumber("ledMode", 0) == 3
         self.updateNetworkTables()
