@@ -1,12 +1,13 @@
 from magicbot import tunable
 
 from utils import lazytalonsrx
-
+import logging
 
 class Winch:
 
     # motor speeds
-    HOIST_SPEED = tunable(0.5)
+    WIND_SPEED = tunable(0.5)
+    UNWIND_SPEED = tunable(0.5)
 
     # motor config
     INVERTED = False
@@ -27,10 +28,15 @@ class Winch:
     def on_disable(self):
         self.stop()
 
-    def hoist(self, output: float) -> None:
-        """Hoist up own robot."""
+    def wind(self) -> None:
+        """Hoist up robot."""
         self.is_hoisting = True
-        self.desired_output = self.HOIST_SPEED
+        self.desired_output = self.WIND_SPEED
+
+    def unwind(self) -> None:
+        """Lower down robot."""
+        self.is_hoisting = True
+        self.desired_output = -self.UNWIND_SPEED
 
     def stop(self) -> None:
         """Stop winch."""

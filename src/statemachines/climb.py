@@ -1,13 +1,18 @@
-from magicbot.state_machine import StateMachine, timed_state
+from magicbot.state_machine import StateMachine, timed_state, state
 from networktables import NetworkTables
-
+from utils import units, lazypigeonimu
 from components import slider, winch
 
 
 class Climb(StateMachine):
 
+    PITCH_OFFSET = 15 * units.radians_per_degree
+    ROLL_OFFSET = 15 * units.radians_per_degree
+
     slider: slider.Slider
     winch: winch.Winch
+
+    imu: lazypigeonimu.LazyPigeonIMU
 
     def __init__(self):
         self.distance_adjust = 0
@@ -21,23 +26,46 @@ class Climb(StateMachine):
     def setup(self):
         self.nt = NetworkTables.getTable("/components/climb")
 
-    def extendHook(self):
-        """Start the climb."""
-        self.engage(initial_state="moveSlider")
+    # def extendHook(self):
+    #     """Start the climb."""
+    #     self.engage(initial_state="extendSlider")
 
-    def climb(self):
-        """End the climb."""
-        self.engage(initial_state="activateWinch")
+    # def climb(self):
+    #     """End the climb."""
+    #     self.engage(initial_state="windWinch")
 
-    @timed_state(duration=5, first=True)
-    def moveSlider(self, initial_call):
+    # def extendHook(self):
+    #     """Start the climb."""
+    #     self.engage(initial_state="extendSlider")
+
+    # def climb(self):
+    #     """End the climb."""
+    #     self.engage(initial_state="windWinch")
+
+    @state(first=True)
+    def synchronousExtension(self, initial_call):
+        """Extend up the slider."""
+        self.slider.extend()
+        self.winch.winch()
+        
+    def extendSlider(self, initial_call):
         """Extend up the slider."""
         self.slider.extend()
 
-    @timed_state(duration=5)
-    def activateWinch(self, initial_call):
+    @state()
+    def retractSlider(self, initial_call):
+        """Extend up the slider."""
+        self.slider.retract()
+
+    @state()
+    def windWinch(self, initial_call):
         """Activate the winch to lift up the robot."""
-        self.winch.winch()
+        self.winch.wind()
+
+    @state()
+    def unwindWinch(self, initial_call):
+        """Activate the winch to lift up the robot."""
+        self.winch.unwind()
 
     def done(self):
         super().done()
