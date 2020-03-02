@@ -1,8 +1,9 @@
 from magicbot.state_machine import StateMachine, state
 from networktables import NetworkTables
 
-from components import intake, tower
+from components import intake, tower, turret
 from components.tower import TowerStage
+from utils import units
 
 
 class IntakeStateMachine(StateMachine):
@@ -44,6 +45,9 @@ class IntakeStateMachine(StateMachine):
 class Indexer(StateMachine):
 
     tower: tower.Tower
+    turret: turret.Turret
+
+    TURRET_TOLERANCE = 5 * units.radians_per_degree
 
     def __init__(self):
         pass
@@ -58,6 +62,13 @@ class Indexer(StateMachine):
         self.engage()
 
     @state(first=True)
+    def zeroTurret(self, initial_call):
+        if initial_call:
+            self.turret.setAbsoluteHeading(0)
+        if abs(self.turret.getHeading()) <= self.TURRET_TOLERANCE:
+            self.next_state("handleBalls")
+
+    @state()
     def handleBalls(self, initial_call):
         if self.tower.highTowerCount() == 0:
             # the high tower is empty
