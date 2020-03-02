@@ -2,7 +2,7 @@ from magicbot import tunable
 from networktables import NetworkTables
 
 from utils import lazytalonsrx
-
+import wpilib
 
 class Intake:
 
@@ -12,7 +12,7 @@ class Intake:
 
     # required devices
     intake_motor: lazytalonsrx.LazyTalonSRX
-
+    intake_limit: wpilib.DigitalInput
     def __init__(self):
         self.is_taking = False
         self.desired_output = 0
@@ -40,7 +40,8 @@ class Intake:
         """Stop intake motor."""
         self.is_taking = False
         self.desired_output = 0
-
+    def hasBall(self):
+        return not self.intake_limit.get()
     def updateNetworkTables(self):
         """Update network table values related to component."""
         self.nt.putNumber("stator_current", self.intake_motor.getStatorCurrent())
