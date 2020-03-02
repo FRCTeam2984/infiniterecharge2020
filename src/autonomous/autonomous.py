@@ -41,6 +41,6 @@ class Autonomous(AutonomousStateMachine):
     def done(self):
         super().done()
         self.chassis.stop()
-        self.tower.stop()
+        self.tower.stop(tower.TowerStage.BOTH)
         self.intake.stop()
 

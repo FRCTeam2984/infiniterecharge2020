@@ -3,74 +3,110 @@ from networktables import NetworkTables
 
 from utils import lazytalonsrx
 
+import logging
+from enum import Enum
+import numpy as np
+
+
+class TowerStage:
+    LOW = 0
+    HIGH = 1
+    BOTH = 2
+
 
 class Tower:
 
     # speeds at which to run motors
     FEED_SPEED = 0.2
-    LOW_TOWER_FEED_SPEED = tunable(FEED_SPEED)
-    HIGH_TOWER_FEED_SPEED = tunable(FEED_SPEED)
+    LT_FEED_SPEED = tunable(FEED_SPEED)
+    HT_FEED_SPEED = tunable(FEED_SPEED)
 
-    INTAKE_SPEED = 0.5
-    LOW_TOWER_INTAKE_SPEED = tunable(INTAKE_SPEED)
-    HIGH_TOWER_INTAKE_SPEED = tunable(INTAKE_SPEED)
+    INTAKE_SLOW_SPEED = 0.2
+    LT_INTAKE_SLOW_SPEED = tunable(INTAKE_SLOW_SPEED)
+    HT_INTAKE_SLOW_SPEED = tunable(INTAKE_SLOW_SPEED)
+
+    INTAKE_FAST_SPEED = 0.5
+    LT_INTAKE_FAST_SPEED = tunable(INTAKE_FAST_SPEED)
+    HT_INTAKE_FAST_SPEED = tunable(INTAKE_FAST_SPEED)
 
     UNJAM_SPEED = -0.5
-    LOW_TOWER_UNJAM_SPEED = tunable(UNJAM_SPEED)
-    HIGH_TOWER_UNJAM_SPEED = tunable(UNJAM_SPEED)
+    LT_UNJAM_SPEED = tunable(UNJAM_SPEED)
+    HT_UNJAM_SPEED = tunable(UNJAM_SPEED)
 
     # required devices
     low_tower_motor: lazytalonsrx.LazyTalonSRX
     high_tower_motor: lazytalonsrx.LazyTalonSRX
+    tower_limits: list
 
     def __init__(self):
-        self.desired_output = [0, 0]
+        self.desired_output_low = 0
+        self.desired_output_high = 0
+
         self.is_moving = False
-        self.ball_count = [False, False, False, False]
+        self.ball_count = np.array([False, False, False, False])
 
     def setup(self):
-        self.nt = NetworkTables.getTable(f"/components/intake")
-        self.high_tower_motor.setInverted(True)
+        self.nt = NetworkTables.getTable(f"/components/tower")
+        self.high_tower_motor.setInverted(False)
+        self.low_tower_motor.setInverted(True)
 
     def on_enable(self):
         pass
 
     def on_disable(self):
-        self.stop()
+        self.stop(TowerStage.BOTH)
 
-    def intake(self) -> None:
+    def _setOutput(self, stage, output_low, output_high):
+        if stage == TowerStage.LOW:
+            self.desired_output_low = output_low
+        elif stage == TowerStage.HIGH:
+            self.desired_output_high = output_low
+        elif stage == TowerStage.BOTH:
+            self.desired_output_low = output_low
+            self.desired_output_high = output_low
+
+    def intakeSlow(self, stage) -> None:
         """Intake balls into the tower."""
-        self.is_moving = True
-        self.desired_output = [
-            self.LOW_TOWER_INTAKE_SPEED,
-            self.HIGH_TOWER_INTAKE_SPEED,
-        ]
+        self._setOutput(stage, self.LT_INTAKE_SLOW_SPEED, self.HT_INTAKE_SLOW_SPEED)
 
-    def unjam(self) -> None:
-        """Unjam balls by running tower backwards."""
-        self.is_moving = True
-        self.desired_output = [self.LOW_TOWER_UNJAM_SPEED, self.HIGH_TOWER_UNJAM_SPEED]
+    def intakeFast(self, stage) -> None:
+        """Intake balls into the tower."""
+        self._setOutput(stage, self.LT_INTAKE_FAST_SPEED, self.HT_INTAKE_FAST_SPEED)
 
-    def feed(self) -> None:
-        """Feed balls into the shooter."""
-        self.is_moving = True
-        self.desired_output = [
-            self.LOW_TOWER_FEED_SPEED,
-            self.HIGH_TOWER_FEED_SPEED,
-        ]
+    def unjam(self, stage) -> None:
+        """Intake balls into the tower."""
+        self._setOutput(stage, self.LT_UNJAM_SPEED, self.HT_UNJAM_SPEED)
 
-    def stop(self) -> None:
-        """Stop lifting balls."""
-        self.is_moving = False
-        self.desired_output = [0, 0]
+    def feed(self, stage) -> None:
+        """Intake balls into the tower."""
+        self._setOutput(stage, self.LT_FEED_SPEED, self.HT_FEED_SPEED)
 
-    def hasBall(self, index: int) -> bool:
+    def stop(self, stage) -> None:
+        """Stop moving balls."""
+        self._setOutput(stage, 0, 0)
+
+    def hasBalls(self, indexes: list) -> bool:
         """Does the tower have a ball at the given index."""
-        return self.ball_count[index]
+        return np.all(self.ball_count[indexes])
 
-    def isFullyLoaded(self) -> bool:
+    def onylHasBalls(self, indexes: int) -> bool:
+        """Does the tower have a ball at the given index."""
+        unwanted_elements = np.delete(self.ball_count, indexes)
+        return self.hasBalls(indexes) and not np.any(unwanted_elements)
+
+    def isFull(self) -> bool:
         """Are 4 balls in the tower."""
-        return all(self.ball_count)
+        return np.all(self.ball_count)
+
+    def isEmpty(self) -> bool:
+        """Are no balls in the tower."""
+        return not np.any(self.ball_count)
+
+    def lowTowerCount(self):
+        return np.sum(self.ball_count[:3])
+
+    def highTowerCount(self):
+        return np.sum(self.ball_count[3:])
 
     def updateNetworkTables(self):
         """Update network table values related to component."""
@@ -78,22 +114,12 @@ class Tower:
         self.nt.putNumber(
             "high_stator_current", self.high_tower_motor.getStatorCurrent()
         )
+        self.nt.putNumber("desired_low", self.desired_output_low)
+        self.nt.putNumber("desired_high", self.desired_output_high)
 
     def execute(self):
-        # TODO handle tower
-        if self.is_moving:
-            self.low_tower_motor.setOutput(self.desired_output[0])
-            self.high_tower_motor.setOutput(self.desired_output[1])
-        else:
-            self.low_tower_motor.setOutput(0)
-            self.high_tower_motor.setOutput(0)
-        # TODO track_balls
-        if False:  # trigger 0
-            self.ball_count[0] = True
-        if False:  # trigger 1
-            self.ball_count[1] = True
-        if False:  # trigger 2
-            self.ball_count[2] = True
-        if False:  # trigger 3
-            self.ball_count[3] = True
-        self.updateNetworkTables()
+        self.low_tower_motor.setOutput(self.desired_output_low)
+        self.high_tower_motor.setOutput(self.desired_output_high)
+
+        for i in range(0, len(self.tower_limits)):
+            self.ball_count[i] = not self.tower_limits[i].get()
