@@ -4,8 +4,19 @@ import rev
 import wpilib
 from magicbot import MagicRobot, tunable
 
-from components import (chassis, flywheel, intake, leds, slider, spinner,
-                        tower, trolley, turret, vision, winch)
+from components import (
+    chassis,
+    flywheel,
+    intake,
+    leds,
+    slider,
+    spinner,
+    tower,
+    trolley,
+    turret,
+    vision,
+    winch,
+)
 from statemachines import alignchassis, climb, disk, indexer, shooter
 from utils import joysticks, lazypigeonimu, lazytalonfx, lazytalonsrx
 
@@ -53,12 +64,7 @@ class Robot(MagicRobot):
     climb: climb.Climb
     disk: disk.Disk
     indexer: indexer.Indexer
-    intake_state_machine: indexer.IntakeStateMachine
-
-    LOW_SPEED_UP = tunable(0.5)
-    LOW_SPEED_DOWN = tunable(-0.5)
-    HIGH_SPEED_UP = tunable(0.5)
-    HIGH_SPEED_DOWN = tunable(-0.5)
+    safeintake: indexer.IntakeStateMachine
 
     def createObjects(self):
         """Initialize all wpilib motors & sensors"""
@@ -133,38 +139,8 @@ class Robot(MagicRobot):
                 self.tower.stop(tower.TowerStage.HIGH)
 
             if self.operator.getBButton():
-                self.intake_state_machine.engage()
+                self.safeintake.engage()
                 self.indexer.index()
-
-            # if self.operator.getYButton() and self.intake_limit.get():
-            #     self.intake.intake()
-            # else:
-            #     self.intake.stop()
-
-            # if self.operator.getRawButton(6):
-            #     self.indexer.unjam()
-
-            # if self.operator.getRawButton(Button.L):
-            #     self.winch.wind()
-            # elif abs(self.operator.getTwist()) >= 0.2:
-            #     self.winch.unwind()
-            # else:
-            #     self.winch.stop()
-
-            # if self.operator.getRawButton(Button.R):
-            #     self.slider.extend()
-            # elif abs(self.operator.getThrottle()) >= 0.2:
-            #     self.slider.retract()
-            # else:
-            #     self.slider.stop()
-
-            # if self.operator.getRawButton(2):
-            #     self.shooter.engage()
-            # if self.operator.getRawButtonPressed(2):
-            #     if self.flywheel.is_spinning:
-            #         self.flywheel.stop()
-            #     else:
-            #         # self.flywheel.setRPM(desired_rpm)
 
             #################
             # real controls #
@@ -185,26 +161,33 @@ class Robot(MagicRobot):
             # operator #
             ############
             # # shooter
-            # if self.operator.getRawButton(1):
+            # if self.operator.getXButton():
             #     self.shooter.shoot()
 
             # # indexer
-            # if self.operator.getRawButton(2):
+            # if self.operator.getAButton():
+            #     self.safeintake.intake()
             #     self.indexer.index()
-            # if self.operator.getRawButton(3):
-            #     self.indexer.unjam()
+
+            # if self.operator.getBumper(self.HAND_LEFT):
+            #     self.tower.intake(tower.TowerStage.LOW)
+            # elif abs(self.operator.getTriggerAxis(self.HAND_LEFT)) >= 0.2:
+            #     self.tower.unjam(tower.TowerStage.LOW)
+            # elif not self.indexer.is_executing:
+            #     self.tower.stop(tower.TowerStage.LOW)
+
+            # if self.operator.getBumper(self.HAND_RIGHT):
+            #     self.tower.intake(tower.TowerStage.HIGH)
+            # elif abs(self.operator.getTriggerAxis(self.HAND_RIGHT)) >= 0.2:
+            #     self.tower.unjam(tower.TowerStage.HIGH)
+            # elif not self.indexer.is_executing:
+            #     self.tower.stop(tower.TowerStage.HIGH)
 
             # # climb
-            # if self.operator.getRawButton(START):
-            #     self.climb.engage("synchronousExtension")
-            # if self.operator.getRawButton(5):
-            #     self.climb.engage("extendSlider")
-            # if self.operator.getRawButton(6):
-            #     self.climb.engage("windWinch")
-            # if self.operator.getRawButton(7):
-            #     self.climb.engage("retractSlider")
-            # if self.operator.getRawButton(8):
-            #     self.climb.engage("unwindWinch")
+            # if self.operator.getStartButton():
+            #     self.climb.startClimb()
+            # elif self.operator.getBackButton():
+            #     self.climb.endClimb()
         except:
             self.onException()
 
