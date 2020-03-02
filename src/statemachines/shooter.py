@@ -41,7 +41,6 @@ class Shooter(StateMachine):
 
     @state()
     def stopTower(self, initial_call):
-        self.tower.stop(tower.TowerStage.BOTH)
         self.next_state("spinFlywheel")
 
     @state()
@@ -82,8 +81,9 @@ class Shooter(StateMachine):
     @state()
     def spinFlywheel(self, initial_call):
         """Spin the flywheel based on the distance to target."""
-        distance = self.vision.getDistance()
-        self.flywheel.setDistance(distance)
+        if initial_call:
+            distance = self.vision.getDistance()
+            self.flywheel.setDistance(distance)
         if self.flywheel.isReady():
             self.next_state("feedBalls")
 
@@ -99,7 +99,8 @@ class Shooter(StateMachine):
 
     def execute(self):
         super().execute()
-        self.vision.enableLED(True)
+        if self.is_executing:
+            self.vision.enableLED(True)
 
     def done(self):
         super().done()
