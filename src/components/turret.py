@@ -146,7 +146,6 @@ class Turret:
 
     def _checkLimitSwitches(self) -> None:
         """Reset turret heading if limit switch triggered."""
-        pass
         # if self.turret_motor.isFwdLimitSwitchClosed():
         #     self.turret_motor.zero(self.SOFT_MAX)
         # if self.turret_motor.isRevLimitSwitchClosed():
@@ -164,7 +163,12 @@ class Turret:
             )
 
     def _setOutput(self, output: float):
-        if self.getHeading() <= self.SOFT_MIN and output <= 0 or self.getHeading() >= self.SOFT_MAX and output >= 0:
+        if (
+            self.getHeading() <= self.SOFT_MIN
+            and output <= 0
+            or self.getHeading() >= self.SOFT_MAX
+            and output >= 0
+        ):
             self.turret_motor.set(0)
         else:
             self.turret_motor.set(output)

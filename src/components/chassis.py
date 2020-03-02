@@ -4,7 +4,8 @@ import numpy as np
 from networktables import NetworkTables
 from wpilib import Timer, controller
 
-from utils import drivesignal, lazypigeonimu, lazytalonfx, units, wheelstate, joysticks
+from utils import (drivesignal, joysticks, lazypigeonimu, lazytalonfx, units,
+                   wheelstate)
 
 
 class Chassis:

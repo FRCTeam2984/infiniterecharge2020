@@ -1,6 +1,7 @@
 import numpy as np
-from networktables import NetworkTables
 from magicbot import tunable
+from networktables import NetworkTables
+
 from utils import units
 
 

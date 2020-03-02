@@ -1,7 +1,8 @@
-from magicbot.state_machine import StateMachine, timed_state, state
+from magicbot.state_machine import StateMachine, state
 from networktables import NetworkTables
-from utils import units, lazypigeonimu
+
 from components import slider, winch
+from utils import lazypigeonimu, units
 
 
 class Climb(StateMachine):
@@ -47,7 +48,7 @@ class Climb(StateMachine):
         """Extend up the slider."""
         self.slider.extend()
         self.winch.winch()
-        
+
     def extendSlider(self, initial_call):
         """Extend up the slider."""
         self.slider.extend()

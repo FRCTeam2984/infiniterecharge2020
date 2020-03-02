@@ -1,6 +1,7 @@
 from magicbot.state_machine import AutonomousStateMachine, state
-from components import chassis, tower, intake
-from statemachines import alignchassis, shooter, indexer
+
+from components import chassis, intake, tower
+from statemachines import alignchassis, indexer, shooter
 
 
 class Autonomous(AutonomousStateMachine):
@@ -14,7 +15,6 @@ class Autonomous(AutonomousStateMachine):
 
     def __init__(self):
         super().__init__()
-        pass
 
     def setup(self):
         pass
@@ -43,4 +43,3 @@ class Autonomous(AutonomousStateMachine):
         self.chassis.stop()
         self.tower.stop(tower.TowerStage.BOTH)
         self.intake.stop()
-

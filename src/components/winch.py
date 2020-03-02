@@ -1,7 +1,7 @@
 from magicbot import tunable
 
 from utils import lazytalonsrx
-import logging
+
 
 class Winch:
 

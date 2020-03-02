@@ -1,5 +1,7 @@
-from utils import lazytalonsrx
 from magicbot import tunable
+
+from utils import lazytalonsrx
+
 
 class Slider:
 

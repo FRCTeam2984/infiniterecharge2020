@@ -1,10 +1,8 @@
-from magicbot.state_machine import StateMachine, state, timed_state
+from magicbot.state_machine import StateMachine, state
 from networktables import NetworkTables
 
-from components import chassis, intake, tower, flywheel
+from components import intake, tower
 from components.tower import TowerStage
-from magicbot import tunable
-import logging
 
 
 class IntakeStateMachine(StateMachine):

@@ -76,11 +76,15 @@ class LazyTalonSRX(ctre.WPI_TalonSRX):
         self.setNeutralMode(self.NeutralMode.Coast)
 
     def setSoftMax(self, limit: float):
-        self.configForwardSoftLimitThreshold(int(limit * self.encoder_config.counts_per_radian))
+        self.configForwardSoftLimitThreshold(
+            int(limit * self.encoder_config.counts_per_radian)
+        )
         self.configForwardSoftLimitEnable(True)
 
     def setSoftMin(self, limit: float):
-        self.configReverseSoftLimitThreshold(int(limit * self.encoder_config.counts_per_radian))
+        self.configReverseSoftLimitThreshold(
+            int(limit * self.encoder_config.counts_per_radian)
+        )
         self.configReverseSoftLimitEnable(True)
 
     def setMotionMagicConfig(self, vel: float, accel: float) -> None:

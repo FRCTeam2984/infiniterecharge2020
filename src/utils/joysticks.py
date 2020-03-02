@@ -1,10 +1,9 @@
 import numpy as np
-import wpilib
 
 
 class Piecewise:
     """https://0x0.st/-TSD"""
-    
+
     def __init__(self, slow: float, fast: float):
         self.slow = slow
         self.fast = fast
@@ -17,8 +16,9 @@ class Piecewise:
             signal *= self.slow
         else:
             signal *= self.fast
-            signal += (1-self.fast)
+            signal += 1 - self.fast
         return sign * signal
+
 
 class Exponential:
     def __init__(self, exponent):

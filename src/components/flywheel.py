@@ -2,7 +2,7 @@ import numpy as np
 import rev
 from magicbot import tunable
 from networktables import NetworkTables
-from wpilib import controller, RobotController
+from wpilib import controller
 
 from utils import units
 
@@ -41,20 +41,20 @@ class Flywheel:
         * units.meters_per_foot
     )
     RPMS = (
-        4540, # 10
-        4590, # 11
-        4630, # 12
-        4720, # 13
-        4870, # 14
-        4890, # 15
-        4980, # 16
-        5040, # 17
-        5110, # 18
-        5200, # 21
-        5400, # 24
-        5700, # 27
-        5900, # 30
-        6200, # 32
+        4540,  # 10
+        4590,  # 11
+        4630,  # 12
+        4720,  # 13
+        4870,  # 14
+        4890,  # 15
+        4980,  # 16
+        5040,  # 17
+        5110,  # 18
+        5200,  # 21
+        5400,  # 24
+        5700,  # 27
+        5900,  # 30
+        6200,  # 32
     )
     # ACCURACY = (1, 1, 1, 1, 0.75, 0.75, 0.75, 0.5, 0.5, 0.5)
 
