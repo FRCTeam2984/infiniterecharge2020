@@ -2,7 +2,7 @@ from magicbot.state_machine import StateMachine, state, timed_state
 from networktables import NetworkTables
 
 from components import chassis, intake, tower, flywheel
-from tower import TowerStage
+from components.tower import TowerStage
 from magicbot import tunable
 import logging
 

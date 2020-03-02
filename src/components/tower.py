@@ -43,7 +43,7 @@ class Tower:
         self.desired_output_high = 0
 
         self.is_moving = False
-        self.ball_count = np.array([False, False, False, False])
+        self.ball_count = np.array([False, False, False, False, False])
 
     def setup(self):
         self.nt = NetworkTables.getTable(f"/components/tower")
