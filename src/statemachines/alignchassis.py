@@ -27,15 +27,7 @@ class AlignChassis(StateMachine):
     HEADING_MAX_OUTPUT = 0.4  # m / s
     HEADING_TOLERANCE = 10 * units.radians_per_degree
 
-    TURN_KP = 0
-    TURN_KI = 0
-    TURN_KD = 0
-    TURN_KF = 0
-    TURN_MIN_OUTPUT = -90 * units.radians_per_degree  # rad / s
-    TURN_MAX_OUTPUT = 90 * units.radians_per_degree  # rad / s
-    TURN_TOLERANCE = 1 * units.radians_per_degree  # rad / s
-
-    SEARCH_SPEED = 0.1
+    SEARCH_SPEED = 0.3
 
     chassis: chassis.Chassis
     turret: turret.Turret
@@ -74,51 +66,11 @@ class AlignChassis(StateMachine):
             self.HEADING_MIN_OUTPUT, self.HEADING_MAX_OUTPUT
         )
 
-        self.turn_pidf = pidf.PIDF(
-            self.TURN_KP, self.TURN_KI, self.TURN_KD, self.TURN_KF, True, -np.pi, np.pi,
-        )
-        self.turn_pidf.setOutputRange(self.TURN_MIN_OUTPUT, self.TURN_MAX_OUTPUT)
-
         self.nt = NetworkTables.getTable("/components/alignchassis")
-
+        
     def align(self):
         """Enable the statemachine."""
         self.engage()
-
-    # def getAllocentricHeading(self):
-    #     return (
-    #         self.vision.getHeading() - self.turret.getHeading() - self.imu.getHeading()
-    #     )
-
-    # def getComponentDistanceToPort(self):
-    #     heading = self.vision.getHeading()
-    #     distance = self.vision.getDistance()
-    #     y = np.sin(np.pi - heading) * distance
-    #     x = np.sqrt(distance ** 2 - y ** 2)
-    #     return (x, y)
-
-    # def getAlignmentTargetDistance(self):
-    #     heading = self.imu.getHeadingInRange()
-    #     x, _ = self.getComponentDistanceToPort()
-    #     target = (x * np.sin(np.pi - heading)) / np.sin(heading)
-    #     return np.clip(self.flywheel.DISTANCES[0], self.flywheel.DISTANCES[-1], target)
-
-    # def getComponentDistanceToAlignmentTarget(self, target):
-    #     heading = self.getAllocentricHeading()
-    #     x = self.vision.getDistance() * np.sin(heading)
-    #     distance = self.vision.getDistance()
-    #     y = target - np.sqrt(distance ** 2 - x ** 2)
-    #     return (x, y)
-
-    # def getDistanceToAlignmentTarget(self, target):
-    #     x, y = self.getComponentDistanceToAlignmentTarget(target)
-    #     return np.sqrt(x ** 2 + y ** 2)
-
-    # def getAngleToAlignmentTarget(self, target):
-    #     x, _ = self.getComponentDistanceToAlignmentTarget(target)
-    #     distance = self.getDistanceToAlignmentTarget(target)
-    #     alpha = np.arcsin(x / distance)
-    #     return np.pi - alpha - self.imu.getHeadingInRange()
 
     def isAligned(self):
         """Is the chassis at an ok distance and heading."""
@@ -126,21 +78,6 @@ class AlignChassis(StateMachine):
             abs(self.desired_distance - self.vision.getDistance())
             <= self.DISTANCE_TOLERANCE
         ) and (abs(self.vision.getHeading()) <= self.HEADING_TOLERANCE)
-
-    # @state()
-    # def turnToHeading(self, initial_call):
-    #     if initial_call:
-    #         self.turn_pidf.reset()
-    #         self.turn_pidf.setSetpoint(desired_heading)
-    #     dt = 0.02
-    #     cur_time = wpilib.Timer.getFPGATimestamp()
-    #     heading =  self.imu.getHeadingInRange()
-    #     if abs(units.angle_diff(heading,desired_heading)) > self.TURN_TOLERANCE:
-    #         omega = self.turn_pidf.update(dt, self.imu.getHeadingInRange())
-    #         self.chassis.setRotationalVelocity(omega)
-    #     else:
-    #         self.next_state(_next_state)
-    #     self.prev_time = cur_time
 
     @state(first=True)
     def findTarget(self, initial_call):
@@ -210,13 +147,5 @@ class AlignChassis(StateMachine):
         self.nt.putNumber("desired_velocity_right", self.desired_velocity.right)
         self.nt.putNumber("distance_adjust", self.distance_adjust)
         self.nt.putNumber("heading_adjust", self.heading_adjust)
-        self.vision.enableLED(True)
-
-        # cx, cy = self.getComponentDistanceToPort()
-
-        # self.nt.putNumber("component_port_x", cx * units.inches_per_meter)
-        # self.nt.putNumber("component_port_y", cy * units.inches_per_meter)
-        # self.nt.putNumber(
-        #     "alignment_target",
-        #     self.getAlignmentTargetDistance() * units.inches_per_meter,
-        # )
+        if self.is_executing:
+            self.vision.enableLED(True)

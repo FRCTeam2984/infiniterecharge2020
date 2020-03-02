@@ -57,11 +57,11 @@ class Chassis:
     VELOCITY_RIGHT_KD = 0
     VELOCITY_RIGHT_KF = 0
 
-    # joystick control parameters
-    JOYSTICK_THROTTLE_SLOW = 0.5
-    JOYSTICK_THROTTLE_FAST = 1.3
-    JOYSTICK_ROTATION_SLOW = 0.5
-    JOYSTICK_ROTATION_FAST = 1.3
+    # joystick control parameters (https://0x0.st/-TSD)
+    JOYSTICK_THROTTLE_SLOW = 0.3
+    JOYSTICK_THROTTLE_FAST = 1.7
+    JOYSTICK_ROTATION_SLOW = 0.3
+    JOYSTICK_ROTATION_FAST = 1.7
     JOYSTICK_DEADBAND = 0.025
 
     # required components
