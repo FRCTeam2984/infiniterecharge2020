@@ -31,7 +31,7 @@ class IntakeStateMachine(StateMachine):
     def stopIntake(self, initial_call):
         self.intake.stop()
         if not self.intake.hasBall():
-            self.next_state("stopIntake")
+            self.next_state("runIntake")
 
     def done(self):
         super().done()
