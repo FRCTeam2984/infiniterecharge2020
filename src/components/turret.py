@@ -194,5 +194,4 @@ class Turret:
             self.turret_motor.setOutput(self.desired_output)
         elif self.mode == self._Mode.Heading:
             self._setHeading(self.desired_heading)
-
         self.updateNetworkTables()

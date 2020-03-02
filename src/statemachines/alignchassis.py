@@ -67,7 +67,7 @@ class AlignChassis(StateMachine):
         )
 
         self.nt = NetworkTables.getTable("/components/alignchassis")
-        
+
     def align(self):
         """Enable the statemachine."""
         self.engage()

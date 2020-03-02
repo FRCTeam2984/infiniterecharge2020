@@ -4,19 +4,8 @@ import rev
 import wpilib
 from magicbot import MagicRobot, tunable
 
-from components import (
-    chassis,
-    flywheel,
-    intake,
-    leds,
-    slider,
-    spinner,
-    tower,
-    trolley,
-    turret,
-    vision,
-    winch,
-)
+from components import (chassis, flywheel, intake, leds, slider, spinner,
+                        tower, trolley, turret, vision, winch)
 from statemachines import alignchassis, climb, disk, indexer, shooter
 from utils import joysticks, lazypigeonimu, lazytalonfx, lazytalonsrx
 
