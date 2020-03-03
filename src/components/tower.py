@@ -3,7 +3,7 @@ from magicbot import tunable
 from networktables import NetworkTables
 
 from utils import lazytalonsrx
-
+import logging
 
 class TowerStage:
     LOW = 0
@@ -14,21 +14,17 @@ class TowerStage:
 class Tower:
 
     # speeds at which to run motors
-    FEED_SPEED = 0.2
-    LT_FEED_SPEED = tunable(FEED_SPEED)
-    HT_FEED_SPEED = tunable(FEED_SPEED)
+    LT_FEED_SPEED = tunable(0.4)
+    HT_FEED_SPEED = tunable(0.4)
 
-    INTAKE_SLOW_SPEED = 0.2
-    LT_INTAKE_SLOW_SPEED = tunable(INTAKE_SLOW_SPEED)
-    HT_INTAKE_SLOW_SPEED = tunable(INTAKE_SLOW_SPEED)
+    LT_INTAKE_SLOW_SPEED = tunable(0.2)
+    HT_INTAKE_SLOW_SPEED = tunable(0.2)
 
-    INTAKE_FAST_SPEED = 0.5
-    LT_INTAKE_FAST_SPEED = tunable(INTAKE_FAST_SPEED)
-    HT_INTAKE_FAST_SPEED = tunable(INTAKE_FAST_SPEED)
+    LT_INTAKE_FAST_SPEED = tunable(0.5)
+    HT_INTAKE_FAST_SPEED = tunable(0.65)
 
-    UNJAM_SPEED = -0.5
-    LT_UNJAM_SPEED = tunable(UNJAM_SPEED)
-    HT_UNJAM_SPEED = tunable(UNJAM_SPEED)
+    LT_UNJAM_SPEED = tunable(-0.5)
+    HT_UNJAM_SPEED = tunable(-0.5)
 
     # required devices
     low_tower_motor: lazytalonsrx.LazyTalonSRX
@@ -84,12 +80,14 @@ class Tower:
 
     def hasBalls(self, indexes: list) -> bool:
         """Does the tower have a ball at the given index."""
+        indexes = np.array(indexes) - 1
         return np.all(self.ball_count[indexes])
 
-    def onylHasBalls(self, indexes: int) -> bool:
+    def onlyHasBalls(self, indexes: int) -> bool:
         """Does the tower have a ball at the given index."""
+        indexes = np.array(indexes) - 1
         unwanted_elements = np.delete(self.ball_count, indexes)
-        return self.hasBalls(indexes) and not np.any(unwanted_elements)
+        return np.all(self.ball_count[indexes]) and not np.any(unwanted_elements)
 
     def isFull(self) -> bool:
         """Are 4 balls in the tower."""
@@ -97,7 +95,7 @@ class Tower:
 
     def isEmpty(self) -> bool:
         """Are no balls in the tower."""
-        return not np.any(self.ball_count)
+        return not np.any(self.ball_count[1:])
 
     def lowTowerCount(self):
         return np.sum(self.ball_count[:3])
@@ -113,10 +111,17 @@ class Tower:
         )
         self.nt.putNumber("desired_low", self.desired_output_low)
         self.nt.putNumber("desired_high", self.desired_output_high)
+        self.nt.putNumber("is_full", self.isFull())
+        self.nt.putNumber("is_empty", self.isEmpty())
+        self.nt.putNumber("low_tower_count", self.lowTowerCount())
+        self.nt.putNumber("high_tower_count", self.highTowerCount())
 
     def execute(self):
         self.low_tower_motor.setOutput(self.desired_output_low)
         self.high_tower_motor.setOutput(self.desired_output_high)
 
-        for i in range(0, len(self.tower_limits)):
+        # TODO add another sensor
+        self.ball_count[0] = True
+        for i in range(1, len(self.tower_limits)):
             self.ball_count[i] = not self.tower_limits[i].get()
+        logging.info(self.ball_count)

@@ -90,6 +90,8 @@ class Shooter(StateMachine):
     @timed_state(duration=5)
     def feedBalls(self, initial_call):
         """Feed balls into the shooter."""
+        if self.tower.isEmpty():
+            self.done()
         # TODO handle misalignment
         if not self.flywheel.isReady():
             self.tower.stop(tower.TowerStage.BOTH)
