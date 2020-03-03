@@ -6,8 +6,8 @@ from utils import lazytalonsrx
 class Winch:
 
     # motor speeds
-    WIND_SPEED = tunable(0.5)
-    UNWIND_SPEED = tunable(0.5)
+    WIND_SPEED = tunable(1.0)
+    UNWIND_SPEED = tunable(1.0)
 
     # motor config
     INVERTED = False

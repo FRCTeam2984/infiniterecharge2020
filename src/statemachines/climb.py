@@ -30,8 +30,9 @@ class Climb(StateMachine):
     def extendHook(self, initial_call):
         """Extend up the slider."""
         self.slider.extend()
+        self.winch.unwind()
 
-    @timed_state(duration=3, next_state="windWinch")
+    @timed_state(duration=2, next_state="windWinch")
     def retractSlider(self):
         self.slider.retractSlider()
 
