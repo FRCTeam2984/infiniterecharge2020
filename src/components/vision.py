@@ -2,7 +2,7 @@ import numpy as np
 from magicbot import tunable
 from networktables import NetworkTables
 
-from utils import units
+from utils import units, rollingaverage
 
 
 class Vision:
@@ -18,6 +18,10 @@ class Vision:
     def __init__(self):
         self.limelight = NetworkTables.getTable("limelight")
         self.is_led_enabled = False
+        self.heading_average = rollingaverage.RollingAverage(5)
+        self.pitch_average = rollingaverage.RollingAverage(5)
+        self.heading = 0
+        self.pitch = 0
 
     def setup(self):
         self.nt = NetworkTables.getTable(f"/components/vision")
@@ -42,25 +46,20 @@ class Vision:
 
     def getHeading(self) -> float:
         """Get the yaw offset to the target."""
-        heading = (
-            self.limelight.getNumber("tx", np.nan) + self.CAMERA_HEADING
-        ) * units.radians_per_degree
-        return heading
+        return self.heading
 
     def getPitch(self) -> float:
         """Get the pitch offset to the target."""
-        pitch_offset = self.limelight.getNumber("ty", np.nan) * units.radians_per_degree
-        return self.CAMERA_PITCH + pitch_offset
+        return self.pitch
 
     def getDistance(self) -> float:
         """Get the distance offset to the target."""
-        pitch = self.getPitch()
-        distance = (self.TARGET_HEIGHT - self.CAMERA_HEIGHT) / np.tan(pitch)
+        distance = (self.TARGET_HEIGHT - self.CAMERA_HEIGHT) / np.tan(self.pitch)
         return distance
 
     def updateNetworkTables(self):
         """Update network table values related to component."""
-        self.nt.putNumber("heading", self.getHeading() * units.degrees_per_radian)
+        self.nt.putNumber("heading", self.heading * units.degrees_per_radian)
         self.nt.putNumber("distance", self.getDistance() * units.inches_per_meter)
         self.nt.putNumber(
             "distance_in_bananas", self.getDistance() * units.bananas_per_meter
@@ -69,4 +68,16 @@ class Vision:
 
     def execute(self):
         self.is_led_enabled = self.limelight.getNumber("ledMode", 0) == 3
+
+        heading = (
+            self.limelight.getNumber("tx", np.nan) + self.CAMERA_HEADING
+        ) * units.radians_per_degree
+        pitch = (
+            self.limelight.getNumber("ty", np.nan) * units.radians_per_degree
+            + self.CAMERA_PITCH
+        )
+
+        self.heading = self.heading_average.calculate(heading)
+        self.pitch = self.pitch_average.calculate(pitch)
+
         self.updateNetworkTables()
