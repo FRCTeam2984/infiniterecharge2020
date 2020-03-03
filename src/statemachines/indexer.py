@@ -1,12 +1,14 @@
-from magicbot.state_machine import StateMachine, state
+from magicbot.state_machine import StateMachine, state, timed_state
 from networktables import NetworkTables
 
 from components import intake, tower, turret
 from components.tower import TowerStage
 from utils import units
 
+import logging
 
-class IntakeStateMachine(StateMachine):
+
+class SafeIntake(StateMachine):
 
     intake: intake.Intake
 
@@ -44,6 +46,7 @@ class IntakeStateMachine(StateMachine):
 
 class Indexer(StateMachine):
 
+    intake: intake.Intake
     tower: tower.Tower
     turret: turret.Turret
 
@@ -61,25 +64,31 @@ class Indexer(StateMachine):
     def index(self):
         self.engage()
 
-    @state(first=True)
-    def zeroTurret(self, initial_call):
-        if initial_call:
-            self.turret.setAbsoluteHeading(0)
-        if abs(self.turret.getHeading()) <= self.TURRET_TOLERANCE:
-            self.next_state("handleBalls")
+    # @state(first=True)
+    # def zeroTurret(self, initial_call):
+    #     if initial_call:
+    #         self.turret.setAbsoluteHeading(0)
+    #     if abs(self.turret.getHeading()) <= self.TURRET_TOLERANCE:
+    #         self.next_state("handleBalls")
 
-    @state()
+    @state(first=True)
     def handleBalls(self, initial_call):
+        self.tower.stop(TowerStage.BOTH)
         if self.tower.highTowerCount() == 0:
             # the high tower is empty
-            if not self.tower.onlyHasBalls([3]):
+            if (
+                self.tower.isEmpty()
+                or self.tower.onlyHasBalls([1])
+                or self.tower.onlyHasBalls([2])
+                or self.tower.onlyHasBalls([1, 2])
+            ):
                 # _____, 1____, _2___, 12___
                 # waiting for first ball to get into pos 3
-                self.next_state("firstBall")
+                self.next_state("firstLowBall")
             elif self.tower.onlyHasBalls([3]) or self.tower.onlyHasBalls([1, 3]):
                 # __3__, 1_3__
                 # waiting for second ball to get into pos 2
-                self.next_state("secondBall")
+                self.next_state("secondLowBall")
             elif self.tower.onlyHasBalls([2, 3]) or self.tower.onlyHasBalls([1, 2, 3]):
                 # _23__, 123__
                 # shift 2 balls from low to high tower
@@ -96,7 +105,7 @@ class Indexer(StateMachine):
                 self.next_state("shiftToHighTower")
             elif not self.tower.hasBalls([3]) and self.tower.hasBalls(4):
                 # ___4_, 1__4_, _2_4_, 12_4_
-                self.next_state("firstBall")
+                self.next_state("firstLowBall")
         elif self.tower.highTowerCount() == 2:
             # the high tower is full
             if self.tower.lowTowerCount != 3:
@@ -108,28 +117,86 @@ class Indexer(StateMachine):
                 # the tower is full, the robot has 5 balls
                 self.next_state("towerFull")
 
+            # # the high tower is full
+            # if not self.tower.hasBalls([1]) and (self.tower.hasBalls([2]) or self.tower.hasBalls([3])):
+            #     # _2_45, __345, _23_45
+            #     # shift balls to the bottom of the low tower
+            #     self.next_state("shiftDownLowTower")
+            # elif (
+            #     self.tower.onlyHasBalls([4, 5])
+            #     or self.tower.onlyHasBalls([1, 4, 5])
+            #     or self.tower.onlyHasBalls([1, 2, 4, 5])
+            # ) and self.intake.hasBall():
+            #     # ___45, 1__45, 12_45
+            #     # load a new ball into the low tower
+            #     self.next_state("additionalLowBalls")
+            # elif self.tower.onlyHasBalls([1, 3, 4, 5]):
+            #     # 1_345
+            #     # TODO WHAT DO WE DO?
+            #     self.next_state("towerFull")
+            # elif self.tower.isFull():
+            #     # 12345
+            #     # the tower is full, the robot has 5 balls
+            #     self.next_state("towerFull")
+
     @state()
-    def firstBall(self, initial_call):
+    def firstLowBall(self, initial_call):
+        # intake the low tower fast
         self.tower.intakeFast(TowerStage.LOW)
-        if self.tower.hasBall(3):
+        if self.tower.hasBalls([3]):
+            # the low tower has a ball in pos 3
             self.next_state("handleBalls")
 
     @state()
-    def secondBall(self, initial_call):
+    def secondLowBall(self, initial_call):
+        # intake the low tower fast
         self.tower.intakeFast(TowerStage.LOW)
-        if self.tower.hasBall(2):
+        if self.tower.hasBalls([2]):
+            # the low tower has a ball in pos 2
             self.next_state("handleBalls")
+
+    # @state()
+    # def additionalLowBalls(self, initial_call):
+    #     # intake the low tower fast
+    #     self.tower.intakeFast(TowerStage.LOW)
+    #     if self.tower.hasBalls([3]):
+    #         # the low tower has a ball in pos 2
+    #         self.next_state("handleBalls")
 
     @state()
     def shiftToHighTower(self, initial_call):
+        # intake the low and high tower fast
         self.tower.intakeFast(TowerStage.BOTH)
-        if self.tower.hasBall(4) and self.tower.hasBall(5):
-            self.next_state("handleBalls")
+        if self.tower.hasBalls([4, 5]):
+            # the high tower is full
+            self.next_state("jamHighTower")
+
+    @timed_state(duration=1, next_state="handleBalls")
+    def jamHighTower(self, initial_call):
+        # intake high tower fast
+        self.tower.intakeFast(TowerStage.HIGH)
 
     @state()
+    def shiftDownHighTower(self, initial_call):
+        # unjam the high tower
+        self.tower.unjam(TowerStage.HIGH)
+        if self.tower.hasBalls([4]):
+            # the high tower has a ball in pos 4
+            self.next_state("handleBalls")
+
+    # @state()
+    # def shiftDownLowTower(self, initial_call):
+    #     # unjam the low tower
+    #     self.tower.unjam(TowerStage.LOW)
+    #     if self.tower.hasBalls([1]):
+    #         # the low tower has a ball in pos 1
+    #         self.next_state("handleBalls")
+    @state()
     def fillLowTower(self, initial_call):
-        self.tower.intakeSlow(TowerStage.LOW)
-        if self.tower.hasBall(2) and self.tower.hasBall(3):
+        # intake the low tower slow
+        self.tower.intakeFast(TowerStage.LOW)
+        if self.tower.hasBalls([1, 2, 3]):
+            # the low tower is full
             self.next_state("handleBalls")
 
     @state()
