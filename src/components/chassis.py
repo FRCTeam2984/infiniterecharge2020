@@ -4,8 +4,7 @@ import numpy as np
 from networktables import NetworkTables
 from wpilib import Timer, controller
 
-from utils import (drivesignal, joysticks, lazypigeonimu, lazytalonfx, units,
-                   wheelstate)
+from utils import drivesignal, joysticks, lazypigeonimu, lazytalonfx, units, wheelstate
 
 
 class Chassis:
@@ -64,6 +63,10 @@ class Chassis:
     JOYSTICK_ROTATION_FAST = 1.7
     JOYSTICK_DEADBAND = 0.025
 
+    # anit tip
+    PITCH_TOLERANCE = 10 * units.radians_per_degree
+    PITCH_SPEED = 0.5
+
     # required components
 
     # required devices
@@ -96,23 +99,6 @@ class Chassis:
         )
         self.rotation_limit = joysticks.Piecewise(
             self.JOYSTICK_ROTATION_SLOW, self.JOYSTICK_ROTATION_FAST
-        )
-
-    # TODO delete this function
-    def setupPIDF(self):
-        self.drive_master_left.setPIDF(
-            0,
-            self.VELOCITY_LEFT_KP,
-            self.VELOCITY_LEFT_KI,
-            self.VELOCITY_LEFT_KD,
-            self.VELOCITY_LEFT_KF,
-        )
-        self.drive_master_right.setPIDF(
-            0,
-            self.VELOCITY_RIGHT_KP,
-            self.VELOCITY_RIGHT_KI,
-            self.VELOCITY_RIGHT_KD,
-            self.VELOCITY_RIGHT_KF,
         )
 
     def setup(self):
@@ -149,11 +135,24 @@ class Chassis:
             self.DRIVE_KS, self.DRIVE_KV, self.DRIVE_KA,
         )
 
-        self.setupPIDF()
+        self.drive_master_left.setPIDF(
+            0,
+            self.VELOCITY_LEFT_KP,
+            self.VELOCITY_LEFT_KI,
+            self.VELOCITY_LEFT_KD,
+            self.VELOCITY_LEFT_KF,
+        )
+        self.drive_master_right.setPIDF(
+            0,
+            self.VELOCITY_RIGHT_KP,
+            self.VELOCITY_RIGHT_KI,
+            self.VELOCITY_RIGHT_KD,
+            self.VELOCITY_RIGHT_KF,
+        )
+
 
     def on_enable(self):
-        # TODO remove setup pidf from enable
-        self.setupPIDF()
+        pass
 
     def on_disable(self):
         self.stop()
@@ -195,6 +194,13 @@ class Chassis:
         velocity_l = -velocity * self.TRACK_RADIUS
         velocity_r = velocity * self.TRACK_RADIUS
         self.setVelocity(velocity_l, velocity_r)
+
+    def isLevel(self) -> bool:
+        return abs(self.imu.getPitchInRange()) <= self.PITCH_TOLERANCE
+
+    def level(self):
+        output = np.sign(self.imu.getPitchInRange()) * self.PITCH_SPEED
+        self.setOutput(output, output)
 
     def stop(self) -> None:
         """Stop all motor output."""
