@@ -5,8 +5,6 @@ from components import intake, tower, turret
 from components.tower import TowerStage
 from utils import units
 
-import logging
-
 
 class SafeIntake(StateMachine):
 

@@ -1,9 +1,11 @@
+import logging
+
 import numpy as np
 from magicbot import tunable
 from networktables import NetworkTables
 
 from utils import lazytalonsrx
-import logging
+
 
 class TowerStage:
     LOW = 0

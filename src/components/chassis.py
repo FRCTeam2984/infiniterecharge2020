@@ -4,7 +4,8 @@ import numpy as np
 from networktables import NetworkTables
 from wpilib import Timer, controller
 
-from utils import drivesignal, joysticks, lazypigeonimu, lazytalonfx, units, wheelstate
+from utils import (drivesignal, joysticks, lazypigeonimu, lazytalonfx, units,
+                   wheelstate)
 
 
 class Chassis:
@@ -149,7 +150,6 @@ class Chassis:
             self.VELOCITY_RIGHT_KD,
             self.VELOCITY_RIGHT_KF,
         )
-
 
     def on_enable(self):
         pass

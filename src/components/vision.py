@@ -2,7 +2,7 @@ import numpy as np
 from magicbot import tunable
 from networktables import NetworkTables
 
-from utils import units, rollingaverage
+from utils import rollingaverage, units
 
 
 class Vision:

@@ -12,4 +12,3 @@ class RollingAverage:
         self.buffer[-1] = value
         self.average = np.mean(self.buffer)
         return self.average
-
