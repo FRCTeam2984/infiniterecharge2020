@@ -185,6 +185,8 @@ class Turret:
             if self.mode == self._Mode.Heading
             else 0,
         )
+        self.nt.putBoolean("is_ready",self.isReady())
+        self.nt.putBoolean("is_aligning", self.mode == self._Mode.Heading)
 
     def execute(self):
         self._checkLimitSwitches()

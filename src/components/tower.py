@@ -113,17 +113,20 @@ class Tower:
         )
         self.nt.putNumber("desired_low", self.desired_output_low)
         self.nt.putNumber("desired_high", self.desired_output_high)
-        self.nt.putNumber("is_full", self.isFull())
-        self.nt.putNumber("is_empty", self.isEmpty())
+        self.nt.putBoolean("is_full", self.isFull())
+        self.nt.putBoolean("is_empty", self.isEmpty())
         self.nt.putNumber("low_tower_count", self.lowTowerCount())
         self.nt.putNumber("high_tower_count", self.highTowerCount())
+        self.nt.putBoolean("ball_1", self.ball_count[0])
+        self.nt.putBoolean("ball_2", self.ball_count[1])
+        self.nt.putBoolean("ball_3", self.ball_count[2])
+        self.nt.putBoolean("ball_4", self.ball_count[3])
+        self.nt.putBoolean("ball_5", self.ball_count[4])
 
     def execute(self):
         self.low_tower_motor.setOutput(self.desired_output_low)
         self.high_tower_motor.setOutput(self.desired_output_high)
 
-        # TODO add another sensor
-        self.ball_count[0] = True
-        for i in range(1, len(self.tower_limits)):
+        for i in range(0, len(self.tower_limits)):
             self.ball_count[i] = not self.tower_limits[i].get()
-        logging.info(self.ball_count)
+        self.updateNetworkTables()

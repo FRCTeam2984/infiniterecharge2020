@@ -141,11 +141,12 @@ class Flywheel:
     def updateNetworkTables(self):
         """Update network table values related to component."""
         self.nt.putNumber("actual_rpm", self.getVelocity())
-        self.nt.putNumber("is_spinning", self.is_spinning)
+        self.nt.putBoolean("is_spinning", self.is_spinning)
         self.nt.putNumber("desired_rpm", self.desired_rpm)
         self.nt.putNumber("error_rpm", self.getVelocity() - self.desired_rpm)
         self.nt.putNumber("desired_accel", self.desired_acceleration)
         self.nt.putNumber("feedforward", self.feedforward)
+        self.nt.putBoolean("is_ready", self.isReady())
 
     def execute(self):
         # calculate feedword terms

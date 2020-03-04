@@ -49,6 +49,7 @@ class Intake:
     def updateNetworkTables(self):
         """Update network table values related to component."""
         self.nt.putNumber("stator_current", self.intake_motor.getStatorCurrent())
+        self.nt.putBoolean("has_ball", self.hasBall())
 
     def execute(self):
         if self.is_taking:
