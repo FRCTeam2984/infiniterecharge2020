@@ -34,7 +34,7 @@ class Climb(StateMachine):
 
     @timed_state(duration=2, next_state="windWinch")
     def retractSlider(self):
-        self.slider.retractSlider()
+        self.slider.retract()
 
     @state()
     def windWinch(self):
