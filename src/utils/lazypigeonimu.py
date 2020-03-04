@@ -1,7 +1,8 @@
 import ctre
 
 from utils import units
-
+import logging
+from wpilib import RobotBase
 
 class LazyPigeonIMU(ctre.PigeonIMU):
     """A wrapper for the PigeonIMU."""
@@ -11,11 +12,11 @@ class LazyPigeonIMU(ctre.PigeonIMU):
 
     def _getRotation(self, axis: int) -> float:
         """Get the angle of the given axis."""
-        return self.getYawPitchRoll()[axis] * units.radians_per_degree
+        return self.getYawPitchRoll()[1][axis] 
 
     def _getRotationInRange(self, axis: int) -> float:
         """Get the angle of the given axis within [-pi, pi]."""
-        rotation = self.getYawPitchRoll()[axis] * units.radians_per_degree
+        rotation = self._getRotation(axis)
         return units.angle_range(rotation)
 
     def getHeading(self) -> float:

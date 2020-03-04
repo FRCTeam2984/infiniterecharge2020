@@ -64,7 +64,7 @@ class Vision:
         self.nt.putNumber(
             "distance_in_bananas", self.getDistance() * units.bananas_per_meter
         )
-        self.nt.putNumber("has_target", self.hasTarget())
+        self.nt.putBoolean("has_target", self.hasTarget())
 
     def execute(self):
         self.is_led_enabled = self.limelight.getNumber("ledMode", 0) == 3
