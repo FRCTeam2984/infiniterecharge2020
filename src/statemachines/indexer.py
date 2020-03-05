@@ -136,7 +136,7 @@ class Indexer(StateMachine):
 
     @state()
     def safelyFillLowTower(self, initial_call):
-        self.tower.intakeFast(TowerStage.LOW)
+        self.tower.intakeSlow(TowerStage.LOW)
         if self.tower.hasBalls([3]):
             self.next_state("handleBalls")
 

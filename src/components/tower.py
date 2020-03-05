@@ -16,8 +16,8 @@ class TowerStage:
 class Tower:
 
     # speeds at which to run motors
-    LT_FEED_SPEED = tunable(0.4)
-    HT_FEED_SPEED = tunable(0.4)
+    LT_FEED_SPEED = tunable(1.0)
+    HT_FEED_SPEED = tunable(1.0)
 
     LT_INTAKE_SLOW_SPEED = tunable(0.2)
     HT_INTAKE_SLOW_SPEED = tunable(0.2)
@@ -31,7 +31,7 @@ class Tower:
     # required devices
     low_tower_motor: lazytalonsrx.LazyTalonSRX
     high_tower_motor: lazytalonsrx.LazyTalonSRX
-    tower_limits: list
+    tower_sensors: list
 
     def __init__(self):
         self.desired_output_low = 0
@@ -55,10 +55,10 @@ class Tower:
         if stage == TowerStage.LOW:
             self.desired_output_low = output_low
         elif stage == TowerStage.HIGH:
-            self.desired_output_high = output_low
+            self.desired_output_high = output_high
         elif stage == TowerStage.BOTH:
             self.desired_output_low = output_low
-            self.desired_output_high = output_low
+            self.desired_output_high = output_high
 
     def intakeSlow(self, stage) -> None:
         """Intake balls into the tower."""
@@ -127,6 +127,6 @@ class Tower:
         self.low_tower_motor.setOutput(self.desired_output_low)
         self.high_tower_motor.setOutput(self.desired_output_high)
 
-        for i in range(0, len(self.tower_limits)):
-            self.ball_count[i] = not self.tower_limits[i].get()
+        for i in range(0, len(self.tower_sensors)):
+            self.ball_count[i] = not self.tower_sensors[i].get()
         self.updateNetworkTables()
