@@ -4,8 +4,18 @@ import rev
 import wpilib
 from magicbot import MagicRobot, tunable
 
-from components import (chassis, flywheel, intake, leds, slider, spinner,
-                        tower, trolley, turret, vision, winch)
+from components import (
+    chassis,
+    flywheel,
+    intake,
+    slider,
+    spinner,
+    tower,
+    trolley,
+    turret,
+    vision,
+    winch,
+)
 from statemachines import alignchassis, climb, disk, indexer, shooter
 from utils import joysticks, lazypigeonimu, lazytalonfx, lazytalonsrx
 
@@ -46,9 +56,10 @@ class Robot(MagicRobot):
     slider: slider.Slider
     winch: winch.Winch
     trolley: trolley.Trolley
-    leds: leds.LED
 
     shooter: shooter.Shooter
+    turrettracker: shooter.TurretTracker
+
     alignchassis: alignchassis.AlignChassis
     climb: climb.Climb
     disk: disk.Disk
@@ -91,17 +102,16 @@ class Robot(MagicRobot):
         # setup imu
         self.imu = lazypigeonimu.LazyPigeonIMU(self.intake_motor)
 
-        # setup leds
-        self.led = wpilib.AddressableLED(0)
+        # setup proximity sensors
+        self.tower_sensors = [wpilib.DigitalInput(i) for i in range(0, 5)]
+        self.intake_sensor = wpilib.DigitalInput(9)
 
         # setup joysticks
         self.driver = wpilib.Joystick(0)
         self.operator = wpilib.XboxController(1)
-        self.tower_limits = [wpilib.DigitalInput(i) for i in range(0, 5)]
-        self.intake_limit = wpilib.DigitalInput(9)
 
     def teleopInit(self):
-        self.vision.enableLED(False)
+        pass
 
     def teleopPeriodic(self):
         """Place code here that does things as a result of operator
@@ -126,19 +136,19 @@ class Robot(MagicRobot):
             # elif not self.indexer.is_executing:
             #     self.tower.stop(tower.TowerStage.HIGH)
 
-            # # climb testing
-            # if self.operator.getBumper(self.HAND_LEFT):
-            #     self.slider.extend()
-            # elif abs(self.operator.getTriggerAxis(self.HAND_LEFT)) >= 0.2:
-            #     self.slider.retract()
-            # else:
-            #     self.slider.stop()
-            # if self.operator.getBumper(self.HAND_RIGHT):
-            #     self.winch.wind()
-            # elif abs(self.operator.getTriggerAxis(self.HAND_RIGHT)) >= 0.2:
-            #     self.winch.unwind()
-            # else:
-            #     self.winch.stop()
+            # climb testing
+            if self.operator.getBumper(self.HAND_LEFT):
+                self.slider.extend()
+            elif abs(self.operator.getTriggerAxis(self.HAND_LEFT)) >= 0.2:
+                self.slider.retract()
+            elif  not self.climb.is_executing:
+                self.slider.stop()
+            if self.operator.getBumper(self.HAND_RIGHT):
+                self.winch.wind()
+            elif abs(self.operator.getTriggerAxis(self.HAND_RIGHT)) >= 0.2:
+                self.winch.unwind()
+            elif not self.climb.is_executing:
+                self.winch.stop()
 
             #################
             # real controls #
@@ -148,26 +158,34 @@ class Robot(MagicRobot):
             # driver #
             ##########
             # chassis target tracking
-            if self.driver.getRawButton(1):
-                self.alignchassis.align()
-            else:
-                if self.chassis.isLevel():
-                    throttle = self.driver.getY()
-                    rotation = self.driver.getZ()
-                    self.chassis.setFromJoystick(throttle, rotation)
-                else:
-                    self.chassis.level()
+            # if self.driver.getRawButton(1):
+            #     self.alignchassis.align()
+            # else:
+            #     if self.chassis.isLevel():
+            throttle = self.driver.getY()
+            rotation = self.driver.getZ()
+            self.chassis.setFromJoystick(throttle, rotation)
+                # else:
+                #     self.chassis.level()
 
             ############
             # operator #
             ############
             # shooter
-            if self.operator.getXButton():
-                self.shooter.shoot()
+            # if self.operator.getXButton():
+            #     self.turrettracker.track()
+            #     self.shooter.shoot()
+                
+            if self.operator.getBButtonPressed():
+                if not self.shooter.is_executing:
+                    if self.flywheel.is_spinning:
+                        self.flywheel.revUp()
+                    else:
+                        self.flywheel.stop()
 
             # indexer
             if self.operator.getAButton():
-                self.safeintake.intake()
+                self.safeintake.intakeBalls()
                 self.indexer.index()
 
             # if self.operator.getBumper(self.HAND_LEFT):
