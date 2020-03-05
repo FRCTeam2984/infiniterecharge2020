@@ -6,8 +6,8 @@ from utils import lazytalonsrx
 class Winch:
 
     # motor speeds
-    WIND_SPEED = tunable(1.0)
-    UNWIND_SPEED = tunable(1.0)
+    WIND_SPEED = 1.0
+    UNWIND_SPEED = -1.0
 
     # motor config
     INVERTED = False
@@ -36,7 +36,7 @@ class Winch:
     def unwind(self) -> None:
         """Lower down robot."""
         self.is_hoisting = True
-        self.desired_output = -self.UNWIND_SPEED
+        self.desired_output = self.UNWIND_SPEED
 
     def stop(self) -> None:
         """Stop winch."""

@@ -6,8 +6,8 @@ from utils import lazytalonsrx
 class Slider:
 
     # speeds to run slider
-    EXTEND_SPEED = tunable(-0.1)
-    RETRACT_SPEED = tunable(0.5)
+    EXTEND_SPEED = -0.5
+    RETRACT_SPEED = 0.5
 
     # motor config
     INVERTED = False
