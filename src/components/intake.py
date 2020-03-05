@@ -8,12 +8,12 @@ from utils import lazytalonsrx
 class Intake:
 
     # speed to run intake
-    INTAKE_SPEED = tunable(1)
-    OUTTAKE_SPEED = tunable(-1)
+    INTAKE_SPEED = 1
+    OUTTAKE_SPEED = -1
 
     # required devices
     intake_motor: lazytalonsrx.LazyTalonSRX
-    intake_limit: wpilib.DigitalInput
+    intake_sensor: wpilib.DigitalInput
 
     def __init__(self):
         self.is_taking = False
@@ -44,7 +44,7 @@ class Intake:
         self.desired_output = 0
 
     def hasBall(self):
-        return not self.intake_limit.get()
+        return not self.intake_sensor.get()
 
     def updateNetworkTables(self):
         """Update network table values related to component."""

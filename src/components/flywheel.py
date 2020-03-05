@@ -1,6 +1,5 @@
 import numpy as np
 import rev
-from magicbot import tunable
 from networktables import NetworkTables
 from wpilib import controller
 
@@ -21,17 +20,17 @@ class Flywheel:
 
     # motor coefs
     # TODO remove ka?
-    FLYWHEEL_KS = tunable(0.491)  # V
-    FLYWHEEL_KV = tunable(0.00195)  # 0.002183  # V / (rpm)
+    FLYWHEEL_KS = 0.491  # V
+    FLYWHEEL_KV = 0.00195  # 0.002183  # V / (rpm)
     FLYWHEEL_KA = 0  # 0.00112  # V / (rpm / s)
 
     # flywheel pidf gains
     # TODO tune
-    FLYWHEEL_KP = tunable(0.0008)
-    FLYWHEEL_KI = tunable(0)  # tunable(0.00000025)
-    FLYWHEEL_KD = tunable(0)
-    FLYWHEEL_KF = tunable(0)
-    FLYWHEEL_IZONE = tunable(0)  # tunable(300)
+    FLYWHEEL_KP = 0.0008
+    FLYWHEEL_KI = 0 
+    FLYWHEEL_KD = 0
+    FLYWHEEL_KF = 0
+    FLYWHEEL_IZONE = 0  
 
     # percent of setpoint
     RPM_TOLERANCE = 0.1
@@ -57,6 +56,8 @@ class Flywheel:
         6200,  # 32
     )
     # ACCURACY = (1, 1, 1, 1, 0.75, 0.75, 0.75, 0.5, 0.5, 0.5)
+
+    REV_RPM = 5000
 
     # required devices
     flywheel_motor: rev.CANSparkMax
@@ -107,7 +108,12 @@ class Flywheel:
     def setDistance(self, distance):
         """Interpolate the RPM of the flywheel from the distance to the target."""
         desired_rpm = np.interp(distance, self.DISTANCES, self.RPMS)
+
         self.setRPM(desired_rpm)
+
+    def revUp(self) -> None:
+        self.is_spinning = True
+        self.desired_rpm = self.REV_RPM
 
     def stop(self) -> None:
         """Stop the flywheel."""

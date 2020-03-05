@@ -38,12 +38,8 @@ class Turret:
     HEADING_TOLERANCE = 0.5 * units.radians_per_degree
 
     # motion magic config values
-    TURRET_MOTION_MAGIC_VELOCITY = tunable(
-        90 * units.radians_per_degree * INPUT_PER_OUTPUT
-    )
-    TURRET_MOTION_MAGIC_ACCEL = tunable(
-        90 * units.radians_per_degree * INPUT_PER_OUTPUT
-    )
+    TURRET_MOTION_MAGIC_VELOCITY = 180 * units.radians_per_degree * INPUT_PER_OUTPUT
+    TURRET_MOTION_MAGIC_ACCEL = 180 * units.radians_per_degree * INPUT_PER_OUTPUT
 
     # tolerance to setpoint error
     VISION_TOLERANCE = 1 * units.radians_per_degree
@@ -105,14 +101,14 @@ class Turret:
         """Stop the turret."""
         self.mode = self._Mode.Idle
 
-    def _isWithinSoftLimits(self, heading: float) -> bool:
-        """Is the given heading within the soft limits."""
-        return self.SOFT_MIN <= heading and heading <= self.SOFT_MAX
+    # def _isWithinSoftLimits(self, heading: float) -> bool:
+    #     """Is the given heading within the soft limits."""
+    #     return self.SOFT_MIN <= heading and heading <= self.SOFT_MAX
 
-    def isWithinSoftLimits(self) -> bool:
-        """Is the turret heading within the soft limits."""
-        heading = self.getHeading()
-        return self._isWithinSoftLimits(heading)
+    # def isWithinSoftLimits(self) -> bool:
+    #     """Is the turret heading within the soft limits."""
+    #     heading = self.getHeading()
+    #     return self._isWithinSoftLimits(heading)
 
     def isReady(self) -> bool:
         """Is the turret ready to shoot balls."""
@@ -144,34 +140,34 @@ class Turret:
         self.mode = self._Mode.Heading
         self.desired_heading = heading - self.imu.getHeadingInRange()
 
-    def _checkLimitSwitches(self) -> None:
-        """Reset turret heading if limit switch triggered."""
-        # if self.turret_motor.isFwdLimitSwitchClosed():
-        #     self.turret_motor.zero(self.SOFT_MAX)
-        # if self.turret_motor.isRevLimitSwitchClosed():
-        #     self.turret_motor.zero(self.SOFT_MIN)
+    # def _checkLimitSwitches(self) -> None:
+    #     """Reset turret heading if limit switch triggered."""
+    #     # if self.turret_motor.isFwdLimitSwitchClosed():
+    #     #     self.turret_motor.zero(self.SOFT_MAX)
+    #     # if self.turret_motor.isRevLimitSwitchClosed():
+    #     #     self.turret_motor.zero(self.SOFT_MIN)
 
     def _setHeading(self, heading: float):
         """Set the motor position setpoint."""
         heading = units.angle_range(heading)
-        if self._isWithinSoftLimits(heading):
-            # TODO use regular PID?
-            self.turret_motor.setMotionMagicPosition(heading * self.INPUT_PER_OUTPUT)
-        else:
-            logging.warning(
-                f"Trying to set turret at {heading} which is outside of soft limits"
-            )
+        # if self._isWithinSoftLimits(heading):
+        # TODO use regular PID?
+        self.turret_motor.setMotionMagicPosition(heading * self.INPUT_PER_OUTPUT)
+        # else:
+        #     logging.warning(
+        #         f"Trying to set turret at {heading} which is outside of soft limits"
+        #     )
 
     def _setOutput(self, output: float):
-        if (
-            self.getHeading() <= self.SOFT_MIN
-            and output <= 0
-            or self.getHeading() >= self.SOFT_MAX
-            and output >= 0
-        ):
-            self.turret_motor.set(0)
-        else:
-            self.turret_motor.set(output)
+        # if (
+        #     self.getHeading() <= self.SOFT_MIN
+        #     and output <= 0
+        #     or self.getHeading() >= self.SOFT_MAX
+        #     and output >= 0
+        # ):
+        #     self.turret_motor.set(0)
+        # else:
+        self.turret_motor.set(output)
 
     def updateNetworkTables(self) -> None:
         """Update network table values related to component."""
@@ -185,11 +181,11 @@ class Turret:
             if self.mode == self._Mode.Heading
             else 0,
         )
-        self.nt.putBoolean("is_ready",self.isReady())
+        self.nt.putBoolean("is_ready", self.isReady())
         self.nt.putBoolean("is_aligning", self.mode == self._Mode.Heading)
 
     def execute(self):
-        self._checkLimitSwitches()
+        # self._checkLimitSwitches()
         if self.mode == self._Mode.Idle:
             self.turret_motor.set(0)
         elif self.mode == self._Mode.Output:

@@ -5,50 +5,23 @@ from components import chassis, flywheel, tower, turret, vision
 from utils import units
 
 
-class Shooter(StateMachine):
+class TurretTracker(StateMachine):
+    turret: turret.Turret
+    vision: vision.Vision
 
     # search config
     SEARCH_MIN = -70 * units.radians_per_degree
     SEARCH_MAX = 70 * units.radians_per_degree
     SEARCH_SPEED = 0.3
 
-    chassis: chassis.Chassis
-    tower: tower.Tower
-    turret: turret.Turret
-    flywheel: flywheel.Flywheel
-    vision: vision.Vision
-
-    def __init__(self):
-        self.is_searching_reverse = False
-
-    def on_disable(self):
-        self.done()
-
-    def setup(self):
-        self.nt = NetworkTables.getTable("/components/shooter")
-
-    def shoot(self):
-        """Enable the statemachine."""
+    def track(self):
         self.engage()
 
-    def isReadyToShoot(self):
-        """Is the turret in position and flywheel up to speed."""
-        return self.turret.isReady() and self.flywheel.isReady()
-
-    @timed_state(first=True, duration=0.1, next_state="searchForTarget")
-    def unjamBalls(self, initial_call):
-        self.tower.unjam(tower.TowerStage.BOTH)
-
-    @state()
-    def stopTower(self, initial_call):
-        self.next_state("spinFlywheel")
-
-    @state()
+    @state(first=True)
     def searchForTarget(self, initial_call):
         """Slew the turret back and forth until a vision target is found."""
         if initial_call:
             # set initial search direction
-            self.tower.stop(tower.TowerStage.BOTH)
             self.is_searching_reverse = self.turret.getHeading() <= 0
 
         # search forwards or reverse
@@ -73,31 +46,71 @@ class Shooter(StateMachine):
         if self.vision.hasTarget():
             heading_error = self.vision.getHeading()
             self.turret.setRelativeHeading(-heading_error)
-            if self.turret.isReady():
-                self.next_state("spinFlywheel")
         else:
             self.next_state("searchForTarget")
+
+    def execute(self):
+        super().execute()
+        if self.is_executing:
+            self.vision.enableLED(True)
+
+    def done(self):
+        super().done()
+        self.turret.stop()
+        self.vision.enableLED(False)
+
+
+class Shooter(StateMachine):
+
+    chassis: chassis.Chassis
+    tower: tower.Tower
+    turret: turret.Turret
+    flywheel: flywheel.Flywheel
+    vision: vision.Vision
+
+    def __init__(self):
+        self.is_searching_reverse = False
+
+    def on_disable(self):
+        self.done()
+
+    def setup(self):
+        self.nt = NetworkTables.getTable("/components/shooter")
+
+    def shoot(self):
+        """Enable the statemachine."""
+        self.engage()
+
+    def isReadyToShoot(self):
+        """Is the turret in position and flywheel up to speed."""
+        return self.turret.isReady() and self.flywheel.isReady()
+
+    @timed_state(first=True, duration=0.1, next_state="startFlywheel")
+    def unjamBalls(self, initial_call):
+        if not self.tower.hasBalls([5]):
+            self.next_state_now("spinFlywheel")
+        self.tower.unjam(tower.TowerStage.BOTH)
 
     @state()
     def spinFlywheel(self, initial_call):
         """Spin the flywheel based on the distance to target."""
         if initial_call:
+            self.tower.stop()
             distance = self.vision.getDistance()
             self.flywheel.setDistance(distance)
         if self.flywheel.isReady():
             self.next_state("feedBalls")
 
-    @timed_state(duration=5)
+    @state()
     def feedBalls(self, initial_call):
         """Feed balls into the shooter."""
         if self.tower.isEmpty():
             self.done()
-        # TODO handle misalignment
-        if not self.flywheel.isReady():
-            self.tower.stop(tower.TowerStage.BOTH)
-            self.next_state("spinFlywheel")
-        else:
-            self.tower.feed(tower.TowerStage.BOTH)
+        # if not self.flywheel.isReady():
+        #     self.tower.stop(tower.TowerStage.BOTH)
+        #     self.next_state("spinFlywheel")
+        # else:
+        self.tower.feed(tower.TowerStage.BOTH)
 
     def execute(self):
         super().execute()

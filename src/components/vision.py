@@ -13,13 +13,16 @@ class Vision:
     CAMERA_PITCH = (
         -1.26055 * units.radians_per_degree
     )  # TODO tune: ty - atan((TARGET_HEIGHT - CAMERA_HEIGHT) / distance)
-    CAMERA_HEADING = tunable(-2)  # TODO tune
+    CAMERA_HEADING = -2 * units.radians_per_degree  # TODO tune
+
+    # rolling average config
+    ROLLING_WINDOW = 5
 
     def __init__(self):
         self.limelight = NetworkTables.getTable("limelight")
         self.is_led_enabled = False
-        self.heading_average = rollingaverage.RollingAverage(5)
-        self.pitch_average = rollingaverage.RollingAverage(5)
+        self.heading_average = rollingaverage.RollingAverage(self.ROLLING_WINDOW)
+        self.pitch_average = rollingaverage.RollingAverage(self.ROLLING_WINDOW)
         self.heading = 0
         self.pitch = 0
 
@@ -70,10 +73,10 @@ class Vision:
         self.is_led_enabled = self.limelight.getNumber("ledMode", 0) == 3
 
         heading = (
-            self.limelight.getNumber("tx", np.nan) + self.CAMERA_HEADING
-        ) * units.radians_per_degree
+            self.limelight.getNumber("tx", 0)
+        ) * units.radians_per_degree + self.CAMERA_HEADING
         pitch = (
-            self.limelight.getNumber("ty", np.nan) * units.radians_per_degree
+            self.limelight.getNumber("ty", 0) * units.radians_per_degree
             + self.CAMERA_PITCH
         )
 
