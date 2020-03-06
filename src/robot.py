@@ -110,6 +110,8 @@ class Robot(MagicRobot):
         self.driver = wpilib.Joystick(0)
         self.operator = wpilib.XboxController(1)
 
+        self.manual_indexer = True
+
     def teleopInit(self):
         pass
 
@@ -117,11 +119,45 @@ class Robot(MagicRobot):
         """Place code here that does things as a result of operator
            actions"""
         try:
-            #############################
-            # TODO remove temp controls #
-            #############################
+            ##########
+            # driver #
+            ##########
+            # chassis target tracking
+            if self.driver.getRawButton(1):
+                self.alignchassis.align()
+            else:
+                throttle = self.driver.getY()
+                rotation = self.driver.getZ()
+                self.chassis.setFromJoystick(throttle, rotation)
 
-            # # indexer testing
+            ############
+            # operator #
+            ############
+            # rev up flywheel
+            # if self.operator.getBButtonPressed():
+            #     if not self.shooter.is_executing:
+            #         if not oself.flywheel.is_spinning:
+            #             self.flywheel.revUp()
+            #         else:
+            #             self.flywheel.stop()
+
+            # shooter
+            if self.operator.getXButton():
+                self.turrettracker.track()
+                self.shooter.shoot()
+
+            # indexer
+            if self.operator.getAButton():
+                self.safeintake.intakeBalls()
+                self.indexer.index()
+
+            # climb
+            if self.operator.getStartButton():
+                self.climb.startClimb()
+            elif self.operator.getBackButton():
+                self.climb.endClimb()
+
+            # switch between manual indexer and climb controls
             # if self.operator.getBumper(self.HAND_LEFT):
             #     self.tower.intakeFast(tower.TowerStage.LOW)
             # elif abs(self.operator.getTriggerAxis(self.HAND_LEFT)) >= 0.2:
@@ -135,80 +171,42 @@ class Robot(MagicRobot):
             #     self.tower.unjam(tower.TowerStage.HIGH)
             # elif not self.indexer.is_executing:
             #     self.tower.stop(tower.TowerStage.HIGH)
+            if self.operator.getStickButtonPressed(self.HAND_LEFT):
+                self.manual_indexer = not self.manual_indexer
+            # print(self.manual_indexer)
+            if self.manual_indexer:
+                # manual indexer
+                if self.operator.getBumper(self.HAND_LEFT):
+                    self.tower.intakeFast(tower.TowerStage.LOW)
+                elif abs(self.operator.getTriggerAxis(self.HAND_LEFT)) >= 0.2:
+                    self.tower.unjam(tower.TowerStage.LOW)
+                elif not self.indexer.is_executing and not self.shooter.is_executing:
+                    self.tower.stop(tower.TowerStage.LOW)
 
-            # climb testing
-            if self.operator.getBumper(self.HAND_LEFT):
-                self.slider.extend()
-            elif abs(self.operator.getTriggerAxis(self.HAND_LEFT)) >= 0.2:
-                self.slider.retract()
-            elif  not self.climb.is_executing:
-                self.slider.stop()
-            if self.operator.getBumper(self.HAND_RIGHT):
-                self.winch.wind()
-            elif abs(self.operator.getTriggerAxis(self.HAND_RIGHT)) >= 0.2:
-                self.winch.unwind()
-            elif not self.climb.is_executing:
-                self.winch.stop()
+                if self.operator.getBumper(self.HAND_RIGHT):
+                    self.tower.intakeFast(tower.TowerStage.HIGH)
+                elif abs(self.operator.getTriggerAxis(self.HAND_RIGHT)) >= 0.2:
+                    self.tower.unjam(tower.TowerStage.HIGH)
+                elif not self.indexer.is_executing and not self.shooter.is_executing:
+                    self.tower.stop(tower.TowerStage.HIGH)
+            else:
+                # manual climb
+                if self.operator.getBumper(self.HAND_LEFT):
+                    self.slider.extend()
+                elif abs(self.operator.getTriggerAxis(self.HAND_LEFT)) >= 0.2:
+                    self.slider.retract()
+                elif not self.climb.is_executing:
+                    self.slider.stop()
+                if self.operator.getBumper(self.HAND_RIGHT):
+                    self.winch.wind()
+                elif abs(self.operator.getTriggerAxis(self.HAND_RIGHT)) >= 0.2:
+                    self.winch.unwind()
+                elif not self.climb.is_executing:
+                    self.winch.stop()
 
-            #################
-            # real controls #
-            #################
-
-            ##########
-            # driver #
-            ##########
-            # chassis target tracking
-            # if self.driver.getRawButton(1):
-            #     self.alignchassis.align()
-            # else:
-            #     if self.chassis.isLevel():
-            throttle = self.driver.getY()
-            rotation = self.driver.getZ()
-            self.chassis.setFromJoystick(throttle, rotation)
-                # else:
-                #     self.chassis.level()
-
-            ############
-            # operator #
-            ############
-            # shooter
-            # if self.operator.getXButton():
-            #     self.turrettracker.track()
-            #     self.shooter.shoot()
-                
-            if self.operator.getBButtonPressed():
-                if not self.shooter.is_executing:
-                    if self.flywheel.is_spinning:
-                        self.flywheel.revUp()
-                    else:
-                        self.flywheel.stop()
-
-            # indexer
-            if self.operator.getAButton():
-                self.safeintake.intakeBalls()
-                self.indexer.index()
-
-            # if self.operator.getBumper(self.HAND_LEFT):
-            #     self.tower.intake(tower.TowerStage.LOW)
-            # elif abs(self.operator.getTriggerAxis(self.HAND_LEFT)) >= 0.2:
-            #     self.tower.unjam(tower.TowerStage.LOW)
-            # elif not self.indexer.is_executing:
-            #     self.tower.stop(tower.TowerStage.LOW)
-
-            # if self.operator.getBumper(self.HAND_RIGHT):
-            #     self.tower.intake(tower.TowerStage.HIGH)
-            # elif abs(self.operator.getTriggerAxis(self.HAND_RIGHT)) >= 0.2:
-            #     self.tower.unjam(tower.TowerStage.HIGH)
-            # elif not self.indexer.is_executing:
-            #     self.tower.stop(tower.TowerStage.HIGH)
-
-            # climb
-            if self.operator.getStartButton():
-                self.climb.startClimb()
-            elif self.operator.getBackButton():
-                self.climb.endClimb()
         except:
             self.onException()
+
 
 
 if __name__ == "__main__":
