@@ -68,7 +68,7 @@ class Indexer(StateMachine):
     #         self.turret.setAbsoluteHeading(0)
     #     if abs(self.turret.getHeading()) <= self.TURRET_TOLERANCE:
     #         self.next_state("handleBalls")
-    
+
     @state(first=True)
     def handleBalls(self, initial_call):
         self.tower.stop(TowerStage.BOTH)
@@ -98,14 +98,15 @@ class Indexer(StateMachine):
             elif (
                 self.tower.lowTowerCount != 3
                 and self.tower.hasBalls([1])
+                and not self.tower.onlyHasBalls([1, 3, 4, 5])
                 and self.intake.hasBall()
             ):
                 # 01__45, # 012_45
                 self.next_state("safelyFillLowTower")
-            elif self.tower.hasBalls([1,3,4,5]):
+            elif self.tower.onlyHasBalls([1, 3, 4, 5]):
                 # 1_345
                 # TODO give up???
-                self.next_state("towerFull")
+                self.next_state("safelyFillLowTower")
             elif self.tower.isFull():
                 # 12345
                 self.next_state("towerFull")
