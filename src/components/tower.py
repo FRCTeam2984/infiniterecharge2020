@@ -19,8 +19,8 @@ class Tower:
     LT_FEED_SPEED = tunable(1.0)
     HT_FEED_SPEED = tunable(1.0)
 
-    LT_INTAKE_SLOW_SPEED = tunable(0.2)
-    HT_INTAKE_SLOW_SPEED = tunable(0.2)
+    LT_INTAKE_SLOW_SPEED = tunable(0.3)
+    HT_INTAKE_SLOW_SPEED = tunable(0.4)
 
     LT_INTAKE_FAST_SPEED = tunable(0.5)
     HT_INTAKE_FAST_SPEED = tunable(0.65)

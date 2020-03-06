@@ -8,6 +8,7 @@ class Autonomous(AutonomousStateMachine):
 
     alignchassis: alignchassis.AlignChassis
     shooter: shooter.Shooter
+    turrettracker: shooter.TurretTracker
     indexer: indexer.Indexer
     tower: tower.Tower
     intake: intake.Intake
@@ -35,6 +36,7 @@ class Autonomous(AutonomousStateMachine):
         if initial_call:
             pass
         self.shooter.engage()
+        self.turrettracker.engage()
         if self.tower.isEmpty():
             self.done()
 

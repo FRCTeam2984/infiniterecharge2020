@@ -5,6 +5,7 @@ from utils import lazytalonsrx
 
 class Slider:
 
+    # TODO tune
     # speeds to run slider
     EXTEND_SPEED = -0.5
     RETRACT_SPEED = 0.5
