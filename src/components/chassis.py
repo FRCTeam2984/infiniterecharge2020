@@ -4,8 +4,7 @@ import numpy as np
 from networktables import NetworkTables
 from wpilib import Timer, controller
 
-from utils import (drivesignal, joysticks, lazypigeonimu, lazytalonfx, units,
-                   wheelstate)
+from utils import drivesignal, joysticks, lazypigeonimu, lazytalonfx, units, wheelstate
 
 
 class Chassis:
@@ -58,11 +57,15 @@ class Chassis:
     VELOCITY_RIGHT_KF = 0
 
     # joystick control parameters (https://0x0.st/-TSD)
-    JOYSTICK_THROTTLE_SLOW = 0.3
-    JOYSTICK_THROTTLE_FAST = 1.7
-    JOYSTICK_ROTATION_SLOW = 0.3
-    JOYSTICK_ROTATION_FAST = 1.7
     JOYSTICK_DEADBAND = 0.025
+
+    JOYSTICK_THROTTLE_SLOW = 0.7
+    JOYSTICK_THROTTLE_FAST = 1.3
+    JOYSTICK_ROTATION_SLOW = 0.7
+    JOYSTICK_ROTATION_FAST = 1.3
+
+    JOYSTICK_ROTATION_EXPONENT = 3
+    JOYSTICK_THROTTLE_EXPONENT = 3
 
     # anit tip
     PITCH_TOLERANCE = 10 * units.radians_per_degree
@@ -95,12 +98,16 @@ class Chassis:
         self.wheel_velocity = wheelstate.WheelState()
         self.heading = 0
         self.nt = NetworkTables.getTable(f"/components/chassis")
-        self.throttle_limit = joysticks.Piecewise(
-            self.JOYSTICK_THROTTLE_SLOW, self.JOYSTICK_THROTTLE_FAST
-        )
-        self.rotation_limit = joysticks.Piecewise(
-            self.JOYSTICK_ROTATION_SLOW, self.JOYSTICK_ROTATION_FAST
-        )
+
+        # self.throttle_limit = joysticks.Piecewise(
+        #     self.JOYSTICK_THROTTLE_SLOW, self.JOYSTICK_THROTTLE_FAST
+        # )
+        # self.rotation_limit = joysticks.Piecewise(
+        #     self.JOYSTICK_ROTATION_SLOW, self.JOYSTICK_ROTATION_FAST
+        # )
+
+        self.throttle_limit = joysticks.Exponential(self.JOYSTICK_THROTTLE_EXPONENT)
+        self.rotation_limit = joysticks.Exponential(self.JOYSTICK_ROTATION_EXPONENT)
 
     def setup(self):
         self.drive_master_left.setInverted(self.LEFT_INVERTED)
@@ -166,15 +173,11 @@ class Chassis:
         self.desired_output.right = output_r
 
     def setFromJoystick(self, throttle: float, rotation: float) -> None:
-        throttle = (
-            0
-            if abs(throttle) <= self.JOYSTICK_DEADBAND
-            else -self.throttle_limit.getValue(throttle)
+        throttle = joysticks.deadband(
+            self.JOYSTICK_DEADBAND, -self.throttle_limit.getValue(throttle)
         )
-        rotation = (
-            0
-            if abs(rotation) <= self.JOYSTICK_DEADBAND
-            else self.rotation_limit.getValue(rotation)
+        rotation = joysticks.deadband(
+            self.JOYSTICK_DEADBAND, -self.rotation_limit.getValue(rotation)
         )
 
         output_l = throttle - rotation
@@ -222,8 +225,8 @@ class Chassis:
         self.nt.putValue("wheel_position_right", self.wheel_position.right)
         self.nt.putValue("wheel_velocity_left", self.wheel_velocity.left)
         self.nt.putValue("wheel_velocity_right", self.wheel_velocity.right)
-        self.nt.putValue("desired_output_left", self.desired_velocity.left)
-        self.nt.putValue("desired_output_right", self.desired_velocity.right)
+        self.nt.putValue("desired_output_left", self.desired_output.left)
+        self.nt.putValue("desired_output_right", self.desired_output.right)
         self.nt.putValue("desired_velocity_left", self.desired_velocity.left)
         self.nt.putValue("desired_velocity_right", self.desired_velocity.right)
         self.nt.putValue(

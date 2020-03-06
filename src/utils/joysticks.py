@@ -1,6 +1,10 @@
 import numpy as np
 
 
+def deadband(deadband, signal):
+    return 0 if abs(signal) <= deadband else signal
+
+
 class Piecewise:
     """https://0x0.st/-TSD"""
 
@@ -26,5 +30,6 @@ class Exponential:
 
     def getValue(self, signal):
         sign = np.sign(signal)
+        signal = abs(signal)
         signal **= self.exponent
         return sign * signal
