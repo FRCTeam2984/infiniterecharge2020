@@ -73,14 +73,15 @@ class Vision:
         self.is_led_enabled = self.limelight.getNumber("ledMode", 0) == 3
 
         heading = (
-            self.limelight.getNumber("tx", 0)
-        ) * units.radians_per_degree + self.CAMERA_HEADING
+            self.limelight.getNumber("tx", 0) * units.radians_per_degree
+            + self.CAMERA_HEADING
+        )
         pitch = (
             self.limelight.getNumber("ty", 0) * units.radians_per_degree
             + self.CAMERA_PITCH
         )
 
-        self.heading = self.heading_average.calculate(heading)
-        self.pitch = self.pitch_average.calculate(pitch)
+        self.heading = heading  # self.heading_average.calculate(heading)
+        self.pitch = pitch  # self.pitch_average.calculate(pitch)
 
         self.updateNetworkTables()
