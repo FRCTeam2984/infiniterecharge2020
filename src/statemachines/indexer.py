@@ -32,7 +32,11 @@ class SafeIntake(StateMachine):
     def stopIntake(self, initial_call):
         self.intake.stop()
         if not self.intake.hasBall():
-            self.next_state("runIntake")
+            self.next_state("wait")
+
+    @timed_state(duration=0.3, next_state="runIntake")
+    def wait(self):
+        pass
 
     def done(self):
         super().done()
