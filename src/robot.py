@@ -125,14 +125,14 @@ class Robot(MagicRobot):
             if self.driver.getRawButtonPressed(1):
                 self.chassis.stop()
                 self.chassis.setBreakMode()
-            elif self.drive.getRawButtonReleased(1):
+            elif self.driver.getRawButtonReleased(1):
                 self.chassis.setCoastMode()
 
             if not self.driver.getRawButton(1):
                 throttle = self.driver.getY()
                 rotation = self.driver.getZ()
                 self.chassis.setFromJoystick(throttle, rotation)
-
+                
             ############
             # operator #
             ############

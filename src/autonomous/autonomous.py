@@ -6,6 +6,10 @@ from statemachines import alignchassis, indexer, shooter
 
 class Autonomous(AutonomousStateMachine):
 
+
+    MODE_NAME = "Shoot"
+    DEFAULT = True
+
     alignchassis: alignchassis.AlignChassis
     shooter: shooter.Shooter
     turrettracker: shooter.TurretTracker
@@ -23,9 +27,9 @@ class Autonomous(AutonomousStateMachine):
     def on_enable(self):
         super().on_enable()
 
-    @timed_state(first=True, duration=2)
+    @timed_state(first=True, duration=0.2, next_state="shootBalls")
     def move(self):
-        self.chassis.setOutput(-0.25,-0.25)
+        self.chassis.setOutput(-0.1,-0.1)
 
     # @state(first=True)
     # def alignChassis(self, initial_call):
@@ -37,10 +41,10 @@ class Autonomous(AutonomousStateMachine):
 
     @state()
     def shootBalls(self, initial_call):
-        self.shooter.engage()
         self.turrettracker.engage()
-        if self.tower.isEmpty():
-            self.done()
+        self.shooter.engage()
+        # if self.tower.isEmpty():
+        #     self.done()
 
     def done(self):
         super().done()

@@ -15,7 +15,7 @@ class Vision:
     CAMERA_HEADING = -2 * units.radians_per_degree  # TODO tune
 
     # rolling average config
-    ROLLING_WINDOW = 1
+    ROLLING_WINDOW = 5
 
     def __init__(self):
         self.limelight = NetworkTables.getTable("limelight")

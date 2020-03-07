@@ -30,10 +30,11 @@ class Turret:
     CONTINUOUS_CURRENT = 25
 
     # position pidf gains
-    TURRRET_KP = 1
-    TURRRET_KI = 0
-    TURRRET_KD = 0.01
-    TURRRET_KF = 0.08
+    TURRET_KP = 1
+    TURRET_KI = 0
+    TURRET_KD = 0.01
+    TURRET_KF = 0.08
+    TURRET_IZONE = 0
 
     HEADING_TOLERANCE = 0.5 * units.radians_per_degree
 
@@ -75,14 +76,6 @@ class Turret:
         )
         self.turret_motor.configContinuousCurrentLimit(
             self.CONTINUOUS_CURRENT, self.TIMEOUT
-        )
-
-        self.turret_motor.setPIDF(
-            0, self.TURRET_KP, self.TURRET_KI, self.TURRET_KD, self.TURRET_KF
-        )
-        self.turret_motor.setIZone(0, self.TURRET_IZONE)
-        self.turret_motor.setMotionMagicConfig(
-            self.TURRET_MOTION_MAGIC_VELOCITY, self.TURRET_MOTION_MAGIC_ACCEL
         )
 
         self.position_pidf = pidf.PIDF(
