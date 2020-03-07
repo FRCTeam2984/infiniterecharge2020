@@ -16,14 +16,14 @@ class TowerStage:
 class Tower:
 
     # speeds at which to run motors
-    LT_FEED_SPEED = tunable(1.0)
-    HT_FEED_SPEED = tunable(1.0)
+    LT_FEED_SPEED = tunable(0.2)
+    HT_FEED_SPEED = tunable(0.2)
 
-    LT_INTAKE_SLOW_SPEED = tunable(0.3)
-    HT_INTAKE_SLOW_SPEED = tunable(0.4)
+    LT_INTAKE_SLOW_SPEED = tunable(0.2)
+    HT_INTAKE_SLOW_SPEED = tunable(0.3)
 
-    LT_INTAKE_FAST_SPEED = tunable(0.5)
-    HT_INTAKE_FAST_SPEED = tunable(0.65)
+    LT_INTAKE_FAST_SPEED = tunable(0.4)
+    HT_INTAKE_FAST_SPEED = tunable(0.5)
 
     LT_UNJAM_SPEED = tunable(-0.5)
     HT_UNJAM_SPEED = tunable(-0.5)

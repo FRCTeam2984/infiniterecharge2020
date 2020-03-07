@@ -13,7 +13,7 @@ class Intake:
 
     # required devices
     intake_motor: lazytalonsrx.LazyTalonSRX
-    intake_sensor: wpilib.DigitalInput
+    intake_sensors: list
 
     def __init__(self):
         self.is_taking = False
@@ -44,7 +44,7 @@ class Intake:
         self.desired_output = 0
 
     def hasBall(self):
-        return not self.intake_sensor.get()
+        return not self.intake_sensors[0].get() or not self.intake_sensors[1].get()
 
     def updateNetworkTables(self):
         """Update network table values related to component."""

@@ -15,8 +15,8 @@ class Flywheel:
 
     # motor config
     INVERTED = True
-    CLOSED_LOOP_RAMP = 0.5
-    OPEN_LOOP_RAMP = 0.5
+    CLOSED_LOOP_RAMP = 0
+    OPEN_LOOP_RAMP = 0
 
     # motor coefs
     # TODO remove ka?
@@ -33,7 +33,7 @@ class Flywheel:
     FLYWHEEL_IZONE = 0  
 
     # percent of setpoint
-    RPM_TOLERANCE = 0.1
+    RPM_TOLERANCE = 0.18
 
     DISTANCES = (
         np.array((10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 24, 27, 30, 32))
@@ -168,6 +168,6 @@ class Flywheel:
             )
         else:
             # stop the flywheel
-            self.flywheel_motor.set(0.0)
+            self.flywheel_motor.stopMotor()
 
         self.updateNetworkTables()
