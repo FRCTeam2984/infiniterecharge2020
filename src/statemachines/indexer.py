@@ -1,8 +1,8 @@
-from magicbot.state_machine import StateMachine, state, timed_state
 from networktables import NetworkTables
 
 from components import intake, tower, turret
 from components.tower import TowerStage
+from magicbot.state_machine import StateMachine, state, timed_state
 from utils import units
 
 

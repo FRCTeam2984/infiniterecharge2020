@@ -1,7 +1,7 @@
-from magicbot.state_machine import StateMachine, state
 from networktables import NetworkTables
 
 from components.spinner import Colors, Spinner
+from magicbot.state_machine import StateMachine, state
 
 
 class Disk(StateMachine):

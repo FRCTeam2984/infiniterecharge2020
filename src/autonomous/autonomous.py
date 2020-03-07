@@ -1,11 +1,9 @@
-from magicbot.state_machine import AutonomousStateMachine, state, timed_state
-
 from components import chassis, intake, tower
+from magicbot.state_machine import AutonomousStateMachine, state, timed_state
 from statemachines import alignchassis, indexer, shooter
 
 
 class Autonomous(AutonomousStateMachine):
-
 
     MODE_NAME = "Shoot"
     DEFAULT = True
@@ -29,7 +27,7 @@ class Autonomous(AutonomousStateMachine):
 
     @timed_state(first=True, duration=0.2, next_state="shootBalls")
     def move(self):
-        self.chassis.setOutput(-0.1,-0.1)
+        self.chassis.setOutput(-0.1, -0.1)
 
     # @state(first=True)
     # def alignChassis(self, initial_call):

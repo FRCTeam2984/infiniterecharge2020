@@ -61,8 +61,8 @@ class Vision:
 
     def getArea(self) -> float:
         """Get the distance offset to the target."""
-        return self.limelight.getValue("ta",0)
-        
+        return self.limelight.getValue("ta", 0)
+
     def updateNetworkTables(self):
         """Update network table values related to component."""
         self.nt.putNumber("heading", self.heading * units.degrees_per_radian)

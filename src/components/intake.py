@@ -1,4 +1,3 @@
-import wpilib
 from networktables import NetworkTables
 
 from utils import lazytalonsrx

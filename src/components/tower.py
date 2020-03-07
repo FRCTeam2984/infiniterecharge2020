@@ -1,9 +1,8 @@
-import logging
 
 import numpy as np
-from magicbot import tunable
 from networktables import NetworkTables
 
+from magicbot import tunable
 from utils import lazytalonsrx
 
 

@@ -2,9 +2,10 @@ from enum import Enum
 
 import numpy as np
 from networktables import NetworkTables
-from wpilib import Timer, controller
 
-from utils import drivesignal, joysticks, lazypigeonimu, lazytalonfx, units, wheelstate
+from utils import (drivesignal, joysticks, lazypigeonimu, lazytalonfx, units,
+                   wheelstate)
+from wpilib import Timer, controller
 
 
 class Chassis:
@@ -68,7 +69,7 @@ class Chassis:
     JOYSTICK_THROTTLE_EXPONENT = 3
 
     JOYSTICK_MAX = 0.3
-    
+
     # anit tip
     PITCH_TOLERANCE = 10 * units.radians_per_degree
     PITCH_SPEED = 0.5
@@ -184,8 +185,8 @@ class Chassis:
 
         output_l = throttle - rotation
         output_r = throttle + rotation
-        output_l = np.clip(output_l,-self.JOYSTICK_MAX,self.JOYSTICK_MAX)
-        output_r = np.clip(output_r,-self.JOYSTICK_MAX,self.JOYSTICK_MAX)
+        output_l = np.clip(output_l, -self.JOYSTICK_MAX, self.JOYSTICK_MAX)
+        output_r = np.clip(output_r, -self.JOYSTICK_MAX, self.JOYSTICK_MAX)
 
         self.setOutput(output_l, output_r)
 

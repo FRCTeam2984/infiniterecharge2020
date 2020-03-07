@@ -1,9 +1,9 @@
 import numpy as np
-import rev
 from networktables import NetworkTables
-from wpilib import controller
 
+import rev
 from utils import units
+from wpilib import controller
 
 
 class Flywheel:
@@ -27,10 +27,10 @@ class Flywheel:
     # flywheel pidf gains
     # TODO tune
     FLYWHEEL_KP = 0.0008
-    FLYWHEEL_KI = 0 
+    FLYWHEEL_KI = 0
     FLYWHEEL_KD = 0
     FLYWHEEL_KF = 0
-    FLYWHEEL_IZONE = 0  
+    FLYWHEEL_IZONE = 0
 
     # percent of setpoint
     RPM_TOLERANCE = 0.18

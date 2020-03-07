@@ -1,11 +1,10 @@
-import logging
 from enum import Enum
 
 from networktables import NetworkTables
 
 from components import vision
-from utils import lazypigeonimu, lazytalonsrx, units
 from controls import pidf
+from utils import lazypigeonimu, lazytalonsrx, units
 
 
 class Turret:

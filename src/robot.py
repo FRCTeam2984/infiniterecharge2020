@@ -2,22 +2,12 @@
 
 import rev
 import wpilib
+from components import (chassis, flywheel, intake, slider, spinner, tower,
+                        trolley, turret, vision, winch)
 from magicbot import MagicRobot
-
-from components import (
-    chassis,
-    flywheel,
-    intake,
-    slider,
-    spinner,
-    tower,
-    trolley,
-    turret,
-    vision,
-    winch,
-)
 from statemachines import alignchassis, climb, disk, indexer, shooter
 from utils import joysticks, lazypigeonimu, lazytalonfx, lazytalonsrx, units
+
 
 class Robot(MagicRobot):
     DRIVE_SLAVE_LEFT_ID = 1
@@ -132,7 +122,7 @@ class Robot(MagicRobot):
                 throttle = self.driver.getY()
                 rotation = self.driver.getZ()
                 self.chassis.setFromJoystick(throttle, rotation)
-                
+
             ############
             # operator #
             ############
@@ -163,7 +153,7 @@ class Robot(MagicRobot):
             # switch between manual indexer and climb controls
             if self.operator.getStickButtonPressed(self.HAND_LEFT):
                 self.manual_indexer = not self.manual_indexer
-                
+
             if self.manual_indexer:
                 # manual indexer
                 if self.operator.getBumper(self.HAND_RIGHT):
