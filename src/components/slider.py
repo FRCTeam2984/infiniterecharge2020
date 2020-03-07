@@ -1,5 +1,3 @@
-from magicbot import tunable
-
 from utils import lazytalonsrx
 
 

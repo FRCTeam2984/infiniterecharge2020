@@ -1,7 +1,6 @@
 import logging
 from enum import Enum
 
-from magicbot import tunable
 from networktables import NetworkTables
 
 from components import vision
@@ -31,10 +30,10 @@ class Turret:
     CONTINUOUS_CURRENT = 25
 
     # position pidf gains
-    TURRRET_KP = tunable(1)
-    TURRRET_KI = tunable(0)
-    TURRRET_KD = tunable(0.01)
-    TURRRET_KF = tunable(0.08)
+    TURRRET_KP = 1
+    TURRRET_KI = 0
+    TURRRET_KD = 0.01
+    TURRRET_KF = 0.08
 
     HEADING_TOLERANCE = 0.5 * units.radians_per_degree
 

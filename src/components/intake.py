@@ -1,5 +1,4 @@
 import wpilib
-from magicbot import tunable
 from networktables import NetworkTables
 
 from utils import lazytalonsrx

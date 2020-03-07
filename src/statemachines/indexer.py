@@ -66,13 +66,6 @@ class Indexer(StateMachine):
     def index(self):
         self.engage()
 
-    # @state(first=True)
-    # def zeroTurret(self, initial_call):
-    #     if initial_call:
-    #         self.turret.setAbsoluteHeading(0)
-    #     if abs(self.turret.getHeading()) <= self.TURRET_TOLERANCE:
-    #         self.next_state("handleBalls")
-
     @state(first=True)
     def handleBalls(self, initial_call):
         self.tower.stop(TowerStage.BOTH)
