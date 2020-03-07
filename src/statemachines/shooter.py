@@ -10,9 +10,9 @@ class TurretTracker(StateMachine):
     vision: vision.Vision
 
     # search config
-    SEARCH_MIN = -70 * units.radians_per_degree
-    SEARCH_MAX = 70 * units.radians_per_degree
-    SEARCH_SPEED = 0.3
+    SEARCH_MIN = -60 * units.radians_per_degree
+    SEARCH_MAX = 60 * units.radians_per_degree
+    SEARCH_SPEED = 0.15
 
     def track(self):
         self.engage()
@@ -68,6 +68,8 @@ class Shooter(StateMachine):
     flywheel: flywheel.Flywheel
     vision: vision.Vision
 
+    VISION_TOLERANCE = 2 * units.radians_per_degree
+
     def __init__(self):
         self.is_searching_reverse = False
 
@@ -85,7 +87,7 @@ class Shooter(StateMachine):
         """Is the turret in position and flywheel up to speed."""
         return self.turret.isReady() and self.flywheel.isReady()
 
-    @timed_state(first=True, duration=0.1, next_state="startFlywheel")
+    @timed_state(first=True, duration=0.1, next_state="spinFlywheel")
     def unjamBalls(self, initial_call):
         if not self.tower.hasBalls([5]):
             self.next_state_now("spinFlywheel")
@@ -94,8 +96,8 @@ class Shooter(StateMachine):
     @state()
     def spinFlywheel(self, initial_call):
         """Spin the flywheel based on the distance to target."""
+        self.tower.stop(tower.TowerStage.BOTH)
         if initial_call:
-            self.tower.stop()
             distance = self.vision.getDistance()
             self.flywheel.setDistance(distance)
         if self.flywheel.isReady():
@@ -104,13 +106,15 @@ class Shooter(StateMachine):
     @state()
     def feedBalls(self, initial_call):
         """Feed balls into the shooter."""
-        if self.tower.isEmpty():
-            self.done()
+        # if self.tower.isEmpty():
+        #     self.done()
         # if not self.flywheel.isReady():
-        #     self.tower.stop(tower.TowerStage.BOTH)
-        #     self.next_state("spinFlywheel")
-        # else:
+        # self.tower.stop(tower.TowerStage.BOTH)
+        # self.next_state("spinFlywheel")
+
+        # if abs(self.vision.getHeading()) <= self.VISION_TOLERANCE:
         self.tower.feed(tower.TowerStage.BOTH)
+        # else:
 
     def execute(self):
         super().execute()
