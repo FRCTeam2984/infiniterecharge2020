@@ -45,7 +45,7 @@ class Vision:
 
     def hasTarget(self) -> bool:
         """Has the limelight found a valid target."""
-        return self.limelight.getNumber("tv", 0) == 1
+        return self.limelight.getNumber("tv", 0) == 1 and self.getArea() >= 2
 
     def getHeading(self) -> float:
         """Get the yaw offset to the target."""
@@ -60,6 +60,10 @@ class Vision:
         distance = (self.TARGET_HEIGHT - self.CAMERA_HEIGHT) / np.tan(self.pitch)
         return distance
 
+    def getArea(self) -> float:
+        """Get the distance offset to the target."""
+        return self.limelight.getValue("ta",0)
+        
     def updateNetworkTables(self):
         """Update network table values related to component."""
         self.nt.putNumber("heading", self.heading * units.degrees_per_radian)
@@ -68,6 +72,7 @@ class Vision:
             "distance_in_bananas", self.getDistance() * units.bananas_per_meter
         )
         self.nt.putBoolean("has_target", self.hasTarget())
+        self.nt.putNumber("area", self.getArea())
 
     def execute(self):
         self.is_led_enabled = self.limelight.getNumber("ledMode", 0) == 3
