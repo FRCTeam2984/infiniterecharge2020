@@ -1,4 +1,4 @@
-from magicbot.state_machine import AutonomousStateMachine, state
+from magicbot.state_machine import AutonomousStateMachine, state, timed_state
 
 from components import chassis, intake, tower
 from statemachines import alignchassis, indexer, shooter
@@ -23,18 +23,20 @@ class Autonomous(AutonomousStateMachine):
     def on_enable(self):
         super().on_enable()
 
-    @state(first=True)
-    def alignChassis(self, initial_call):
-        if initial_call:
-            pass
-        self.alignchassis.engage()
-        if self.alignchassis.isAligned():
-            self.next_state("shootBalls")
+    @timed_state(first=True, duration=2)
+    def move(self):
+        self.chassis.setOutput(-0.25,-0.25)
+
+    # @state(first=True)
+    # def alignChassis(self, initial_call):
+    #     if initial_call:
+    #         pass
+    #     self.alignchassis.engage()
+    #     if self.alignchassis.isAligned():
+    #         self.next_state("shootBalls")
 
     @state()
     def shootBalls(self, initial_call):
-        if initial_call:
-            pass
         self.shooter.engage()
         self.turrettracker.engage()
         if self.tower.isEmpty():

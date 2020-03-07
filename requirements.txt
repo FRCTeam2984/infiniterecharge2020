@@ -1,7 +1,7 @@
-pyfrc ~=  2020.0.2
-robotpy-rev ~= 2020.1.0
-robotpy-ctre ~= 2020.2.0
-wpilib ~= 2020.2.2.8
+pyfrc ~=  2020.1.4
+robotpy-rev ~= 2020.1.1
+robotpy-ctre ~= 2020.3.0
+wpilib ~= 2020.3.2.4
 
 numpy
 black

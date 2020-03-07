@@ -59,14 +59,16 @@ class Chassis:
     # joystick control parameters (https://0x0.st/-TSD)
     JOYSTICK_DEADBAND = 0.025
 
-    JOYSTICK_THROTTLE_SLOW = 0.7
-    JOYSTICK_THROTTLE_FAST = 1.3
-    JOYSTICK_ROTATION_SLOW = 0.7
-    JOYSTICK_ROTATION_FAST = 1.3
+    JOYSTICK_THROTTLE_SLOW = 0.5
+    JOYSTICK_THROTTLE_FAST = 2.2
+    JOYSTICK_ROTATION_SLOW = 0.5
+    JOYSTICK_ROTATION_FAST = 2.2
 
     JOYSTICK_ROTATION_EXPONENT = 3
     JOYSTICK_THROTTLE_EXPONENT = 3
 
+    JOYSTICK_MAX_OUTPUT = 0.3
+    
     # anit tip
     PITCH_TOLERANCE = 10 * units.radians_per_degree
     PITCH_SPEED = 0.5
@@ -99,15 +101,15 @@ class Chassis:
         self.heading = 0
         self.nt = NetworkTables.getTable(f"/components/chassis")
 
-        # self.throttle_limit = joysticks.Piecewise(
-        #     self.JOYSTICK_THROTTLE_SLOW, self.JOYSTICK_THROTTLE_FAST
-        # )
-        # self.rotation_limit = joysticks.Piecewise(
-        #     self.JOYSTICK_ROTATION_SLOW, self.JOYSTICK_ROTATION_FAST
-        # )
+        self.throttle_limit = joysticks.Piecewise(
+            self.JOYSTICK_THROTTLE_SLOW, self.JOYSTICK_THROTTLE_FAST
+        )
+        self.rotation_limit = joysticks.Piecewise(
+            self.JOYSTICK_ROTATION_SLOW, self.JOYSTICK_ROTATION_FAST
+        )
 
-        self.throttle_limit = joysticks.Exponential(self.JOYSTICK_THROTTLE_EXPONENT)
-        self.rotation_limit = joysticks.Exponential(self.JOYSTICK_ROTATION_EXPONENT)
+        # self.throttle_limit = joysticks.Exponential(self.JOYSTICK_THROTTLE_EXPONENT)
+        # self.rotation_limit = joysticks.Exponential(self.JOYSTICK_ROTATION_EXPONENT)
 
     def setup(self):
         self.drive_master_left.setInverted(self.LEFT_INVERTED)
@@ -177,11 +179,14 @@ class Chassis:
             self.JOYSTICK_DEADBAND, -self.throttle_limit.getValue(throttle)
         )
         rotation = joysticks.deadband(
-            self.JOYSTICK_DEADBAND, -self.rotation_limit.getValue(rotation)
+            self.JOYSTICK_DEADBAND, self.rotation_limit.getValue(rotation)
         )
 
         output_l = throttle - rotation
         output_r = throttle + rotation
+        output_l = np.clip(output_l,-self.JOYSTICK_MAX_OUTPUT,self.JOYSTICK_MAX_OUTPUT)
+        output_r = np.clip(output_r,-self.JOYSTICK_MAX_OUTPUT,self.JOYSTICK_MAX_OUTPUT)
+
         self.setOutput(output_l, output_r)
 
     def setVelocity(self, velocity_l: float, velocity_r: float) -> None:
@@ -221,24 +226,24 @@ class Chassis:
 
     def updateNetworkTables(self):
         """Update network table values related to component."""
-        self.nt.putValue("wheel_position_left", self.wheel_position.left)
-        self.nt.putValue("wheel_position_right", self.wheel_position.right)
-        self.nt.putValue("wheel_velocity_left", self.wheel_velocity.left)
-        self.nt.putValue("wheel_velocity_right", self.wheel_velocity.right)
-        self.nt.putValue("desired_output_left", self.desired_output.left)
-        self.nt.putValue("desired_output_right", self.desired_output.right)
-        self.nt.putValue("desired_velocity_left", self.desired_velocity.left)
-        self.nt.putValue("desired_velocity_right", self.desired_velocity.right)
-        self.nt.putValue(
+        self.nt.putNumber("wheel_position_left", self.wheel_position.left)
+        self.nt.putNumber("wheel_position_right", self.wheel_position.right)
+        self.nt.putNumber("wheel_velocity_left", self.wheel_velocity.left)
+        self.nt.putNumber("wheel_velocity_right", self.wheel_velocity.right)
+        self.nt.putNumber("desired_output_left", self.desired_output.left)
+        self.nt.putNumber("desired_output_right", self.desired_output.right)
+        self.nt.putNumber("desired_velocity_left", self.desired_velocity.left)
+        self.nt.putNumber("desired_velocity_right", self.desired_velocity.right)
+        self.nt.putNumber(
             "error_velocity_left", self.desired_velocity.left - self.wheel_velocity.left
         )
-        self.nt.putValue(
+        self.nt.putNumber(
             "error_velocity_right",
             self.desired_velocity.right - self.wheel_velocity.right,
         )
-        self.nt.putValue("feedforward_left", self.feedforward.left)
-        self.nt.putValue("feedforward_right", self.feedforward.right)
-        self.nt.putValue("heading", self.heading * units.degrees_per_radian)
+        self.nt.putNumber("feedforward_left", self.feedforward.left)
+        self.nt.putNumber("feedforward_right", self.feedforward.right)
+        self.nt.putNumber("heading", self.heading * units.degrees_per_radian)
 
     def execute(self):
         cur_time = Timer.getFPGATimestamp()
