@@ -1,5 +1,4 @@
 import numpy as np
-from magicbot import tunable
 from networktables import NetworkTables
 
 from utils import rollingaverage, units
@@ -16,7 +15,7 @@ class Vision:
     CAMERA_HEADING = -2 * units.radians_per_degree  # TODO tune
 
     # rolling average config
-    ROLLING_WINDOW = 5
+    ROLLING_WINDOW = 1
 
     def __init__(self):
         self.limelight = NetworkTables.getTable("limelight")
@@ -67,6 +66,7 @@ class Vision:
     def updateNetworkTables(self):
         """Update network table values related to component."""
         self.nt.putNumber("heading", self.heading * units.degrees_per_radian)
+        self.nt.putNumber("pitch", self.pitch * units.degrees_per_radian)
         self.nt.putNumber("distance", self.getDistance() * units.inches_per_meter)
         self.nt.putNumber(
             "distance_in_bananas", self.getDistance() * units.bananas_per_meter
@@ -86,7 +86,7 @@ class Vision:
             + self.CAMERA_PITCH
         )
 
-        self.heading = heading  # self.heading_average.calculate(heading)
-        self.pitch = pitch  # self.pitch_average.calculate(pitch)
+        self.heading = self.heading_average.calculate(heading)
+        self.pitch = self.pitch_average.calculate(pitch)
 
         self.updateNetworkTables()

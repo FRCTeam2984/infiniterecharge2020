@@ -59,15 +59,15 @@ class Chassis:
     # joystick control parameters (https://0x0.st/-TSD)
     JOYSTICK_DEADBAND = 0.025
 
-    JOYSTICK_THROTTLE_SLOW = 0.5
-    JOYSTICK_THROTTLE_FAST = 2.2
-    JOYSTICK_ROTATION_SLOW = 0.5
-    JOYSTICK_ROTATION_FAST = 2.2
+    JOYSTICK_THROTTLE_SLOW = 0.2
+    JOYSTICK_THROTTLE_FAST = 3
+    JOYSTICK_ROTATION_SLOW = 0.2
+    JOYSTICK_ROTATION_FAST = 3
 
     JOYSTICK_ROTATION_EXPONENT = 3
     JOYSTICK_THROTTLE_EXPONENT = 3
 
-    JOYSTICK_MAX_OUTPUT = 0.3
+    JOYSTICK_MAX = 0.3
     
     # anit tip
     PITCH_TOLERANCE = 10 * units.radians_per_degree
@@ -184,8 +184,8 @@ class Chassis:
 
         output_l = throttle - rotation
         output_r = throttle + rotation
-        output_l = np.clip(output_l,-self.JOYSTICK_MAX_OUTPUT,self.JOYSTICK_MAX_OUTPUT)
-        output_r = np.clip(output_r,-self.JOYSTICK_MAX_OUTPUT,self.JOYSTICK_MAX_OUTPUT)
+        output_l = np.clip(output_l,-self.JOYSTICK_MAX,self.JOYSTICK_MAX)
+        output_r = np.clip(output_r,-self.JOYSTICK_MAX,self.JOYSTICK_MAX)
 
         self.setOutput(output_l, output_r)
 

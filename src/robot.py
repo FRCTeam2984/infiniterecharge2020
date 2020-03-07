@@ -2,7 +2,7 @@
 
 import rev
 import wpilib
-from magicbot import MagicRobot, tunable
+from magicbot import MagicRobot
 
 from components import (
     chassis,
@@ -122,9 +122,13 @@ class Robot(MagicRobot):
             # driver #
             ##########
             # chassis target tracking
-            if self.driver.getRawButton(1):
-                self.alignchassis.align()
-            else:
+            if self.driver.getRawButtonPressed(1):
+                self.chassis.stop()
+                self.chassis.setBreakMode()
+            elif self.drive.getRawButtonReleased(1):
+                self.chassis.setCoastMode()
+
+            if not self.driver.getRawButton(1):
                 throttle = self.driver.getY()
                 rotation = self.driver.getZ()
                 self.chassis.setFromJoystick(throttle, rotation)
@@ -144,7 +148,7 @@ class Robot(MagicRobot):
             if self.operator.getXButton():
                 self.turrettracker.track()
                 self.shooter.shoot()
-            #
+
             # indexer
             if self.operator.getYButton():
                 self.safeintake.intakeBalls()
@@ -159,16 +163,13 @@ class Robot(MagicRobot):
             # switch between manual indexer and climb controls
             if self.operator.getStickButtonPressed(self.HAND_LEFT):
                 self.manual_indexer = not self.manual_indexer
-            # print(self.manual_indexer)
+                
             if self.manual_indexer:
                 # manual indexer
                 if self.operator.getBumper(self.HAND_RIGHT):
                     self.tower.intakeFast(tower.TowerStage.LOW)
                 elif abs(self.operator.getTriggerAxis(self.HAND_RIGHT)) >= 0.2:
                     self.tower.unjam(tower.TowerStage.LOW)
-                # elif not self.indexer.is_executing and not self.shooter.is_executing:
-                #     self.tower.stop(tower.TowerStage.LOW)
-
                 elif self.operator.getBumper(self.HAND_LEFT):
                     self.tower.intakeFast(tower.TowerStage.BOTH)
                 elif abs(self.operator.getTriggerAxis(self.HAND_LEFT)) >= 0.2:
