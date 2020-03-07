@@ -6,6 +6,7 @@ from networktables import NetworkTables
 
 from components import vision
 from utils import lazypigeonimu, lazytalonsrx, units
+from controls import pidf
 
 
 class Turret:
@@ -30,19 +31,12 @@ class Turret:
     CONTINUOUS_CURRENT = 25
 
     # position pidf gains
-    TURRET_KP = 4
-    TURRET_KI = 0.01
-    TURRET_KD = 0
-    TURRET_KF = 0.08
-    TURRET_IZONE = 2 * units.radians_per_degree
+    TURRRET_KP = tunable(1)
+    TURRRET_KI = tunable(0)
+    TURRRET_KD = tunable(0.01)
+    TURRRET_KF = tunable(0.08)
+
     HEADING_TOLERANCE = 0.5 * units.radians_per_degree
-
-    # motion magic config values
-    TURRET_MOTION_MAGIC_VELOCITY = 180 * units.radians_per_degree * INPUT_PER_OUTPUT
-    TURRET_MOTION_MAGIC_ACCEL = 180 * units.radians_per_degree * INPUT_PER_OUTPUT
-
-    # tolerance to setpoint error
-    VISION_TOLERANCE = 1 * units.radians_per_degree
 
     # required devices
     turret_motor: lazytalonsrx.LazyTalonSRX
@@ -63,11 +57,12 @@ class Turret:
         self.nt = NetworkTables.getTable(f"/components/turret")
 
     def setup(self):
-        # self.turret_motor.setStatusFramePeriod(
-        #     lazytalonsrx.LazyTalonSRX.StatusFrame.Status_2_Feedback0,
-        #     self.STATUS_FRAME,
-        #     self.TIMEOUT,
-        # )
+        self.turret_motor.setStatusFramePeriod(
+            lazytalonsrx.LazyTalonSRX.StatusFrame.Status_2_Feedback0,
+            self.STATUS_FRAME,
+            self.TIMEOUT,
+        )
+        self.turret_motor.setBrakeMode()
         self.turret_motor.setSoftMin(self.SOFT_MIN)
         self.turret_motor.setSoftMax(self.SOFT_MAX)
 
@@ -91,6 +86,10 @@ class Turret:
             self.TURRET_MOTION_MAGIC_VELOCITY, self.TURRET_MOTION_MAGIC_ACCEL
         )
 
+        self.position_pidf = pidf.PIDF(
+            self.TURRET_KI, self.TURRET_KP, self.TURRET_KD, self.TURRET_KF, True,
+        )
+
     def on_enable(self):
         self.turret_motor.zero()
 
@@ -101,20 +100,14 @@ class Turret:
         """Stop the turret."""
         self.mode = self._Mode.Idle
 
-    # def _isWithinSoftLimits(self, heading: float) -> bool:
-    #     """Is the given heading within the soft limits."""
-    #     return self.SOFT_MIN <= heading and heading <= self.SOFT_MAX
-
-    # def isWithinSoftLimits(self) -> bool:
-    #     """Is the turret heading within the soft limits."""
-    #     heading = self.getHeading()
-    #     return self._isWithinSoftLimits(heading)
-
     def isReady(self) -> bool:
         """Is the turret ready to shoot balls."""
         return (self.mode == self._Mode.Heading) and abs(
             self.desired_heading - self.getHeading()
         ) <= self.HEADING_TOLERANCE
+
+    def isMoving(self):
+        return self.mode == self._Mode.Heading or self.mode == self._Mode.Output
 
     def getHeading(self) -> float:
         """Get the heading of the turret."""
@@ -134,56 +127,27 @@ class Turret:
         """Set the absolute heading of the turret."""
         self.mode = self._Mode.Heading
         self.desired_heading = heading
-
-    def setAllocentricHeading(self, heading: float) -> None:
-        """Set the allocentric (relative to field) heading of the turret."""
-        self.mode = self._Mode.Heading
-        self.desired_heading = heading - self.imu.getHeadingInRange()
-
-    # def _checkLimitSwitches(self) -> None:
-    #     """Reset turret heading if limit switch triggered."""
-    #     # if self.turret_motor.isFwdLimitSwitchClosed():
-    #     #     self.turret_motor.zero(self.SOFT_MAX)
-    #     # if self.turret_motor.isRevLimitSwitchClosed():
-    #     #     self.turret_motor.zero(self.SOFT_MIN)
-
-    def _setHeading(self, heading: float):
-        """Set the motor position setpoint."""
-        heading = units.angle_range(heading)
-        # if self._isWithinSoftLimits(heading):
-        # TODO use regular PID?
-        self.turret_motor.setMotionMagicPosition(heading * self.INPUT_PER_OUTPUT)
-        # else:
-        #     logging.warning(
-        #         f"Trying to set turret at {heading} which is outside of soft limits"
-        #     )
-
-    def _setOutput(self, output: float):
-        # if (
-        #     self.getHeading() <= self.SOFT_MIN
-        #     and output <= 0
-        #     or self.getHeading() >= self.SOFT_MAX
-        #     and output >= 0
-        # ):
-        #     self.turret_motor.set(0)
-        # else:
-        self.turret_motor.set(output)
+        self.position_pidf.setSetpoint(self.desired_heading)
 
     def updateNetworkTables(self) -> None:
         """Update network table values related to component."""
-        self.nt.putValue("heading", self.getHeading() * units.degrees_per_radian)
-        self.nt.putValue(
-            "is_at_heading", self.mode == self._Mode.Heading and self.isReady()
-        )
-        self.nt.putValue(
+        self.nt.putNumber("heading", self.getHeading() * units.degrees_per_radian)
+        self.nt.putNumber(
             "heading_error",
-            self.turret_motor.getError() * units.degrees_per_radian
-            if self.mode == self._Mode.Heading
-            else 0,
+            (self.getHeading() - self.desired_heading) * units.degrees_per_radian,
+        )
+        self.nt.putNumber(
+            "desired_heading", self.desired_heading * units.degrees_per_radian
+        )
+        self.nt.putNumber("desired_output", self.desired_output)
+        self.nt.putNumber(
+            "is_at_heading", self.mode == self._Mode.Heading and self.isReady()
         )
         self.nt.putBoolean("is_ready", self.isReady())
         self.nt.putBoolean("is_aligning", self.mode == self._Mode.Heading)
 
+    # def _setOutput(self, output):
+    #     self.isSo
     def execute(self):
         # self._checkLimitSwitches()
         if self.mode == self._Mode.Idle:
@@ -191,5 +155,6 @@ class Turret:
         elif self.mode == self._Mode.Output:
             self.turret_motor.setOutput(self.desired_output)
         elif self.mode == self._Mode.Heading:
-            self._setHeading(self.desired_heading)
+            self.desired_output = self.position_pidf.update(self.getHeading(), 0.02)
+            self.turret_motor.setOutput(self.desired_output)
         self.updateNetworkTables()
