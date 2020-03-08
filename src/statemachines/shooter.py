@@ -112,7 +112,10 @@ class Shooter(StateMachine):
         # self.tower.stop(tower.TowerStage.BOTH)
         # self.next_state("spinFlywheel")
 
-        if abs(self.vision.getHeading()) <= self.VISION_TOLERANCE and self.vision.hasTarget():
+        if (
+            abs(self.vision.getHeading()) <= self.VISION_TOLERANCE
+            and self.vision.hasTarget()
+        ):
             self.tower.feed(tower.TowerStage.BOTH)
         else:
             self.tower.stop(tower.TowerStage.BOTH)

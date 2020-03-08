@@ -202,7 +202,6 @@ class Chassis:
         velocity_r = velocity * self.TRACK_RADIUS
         self.setVelocity(velocity_l, velocity_r)
 
-
     def stop(self) -> None:
         """Stop all motor output."""
         self.mode = self._Mode.Idle

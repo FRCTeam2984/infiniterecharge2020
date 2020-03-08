@@ -2,11 +2,12 @@
 
 import rev
 import wpilib
-from components import (chassis, flywheel, intake, slider, tower,
-                         turret, vision, winch)
+from components import (chassis, flywheel, intake, slider, tower, turret,
+                        vision, winch)
 from magicbot import MagicRobot
 from statemachines import alignchassis, climb, indexer, shooter
 from utils import joysticks, lazypigeonimu, lazytalonfx, lazytalonsrx, units
+
 
 class Robot(MagicRobot):
     DRIVE_SLAVE_LEFT_ID = 1
@@ -94,7 +95,6 @@ class Robot(MagicRobot):
         self.operator = wpilib.XboxController(1)
 
         self.manual_indexer = True
-
 
     def teleopInit(self):
         pass

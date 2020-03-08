@@ -5,7 +5,7 @@ from networktables import NetworkTables
 from components import vision
 from controls import pidf
 from utils import lazypigeonimu, lazytalonsrx, units
-from magicbot import tunable
+
 
 class Turret:
 
@@ -29,10 +29,10 @@ class Turret:
     CONTINUOUS_CURRENT = 25
 
     # position pidf gains
-    TURRET_KP = 1 # 1
-    TURRET_KI = 0.001 # 0.001
-    TURRET_KD = 0.008 # 0.008
-    TURRET_KF = 0.08 # 0.08
+    TURRET_KP = 1  # 1
+    TURRET_KI = 0.001  # 0.001
+    TURRET_KD = 0.008  # 0.008
+    TURRET_KF = 0.08  # 0.08
     TURRET_IZONE = 0
 
     HEADING_TOLERANCE = 0.5 * units.radians_per_degree

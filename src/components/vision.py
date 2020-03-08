@@ -2,13 +2,13 @@ import numpy as np
 from networktables import NetworkTables
 
 from utils import rollingaverage, units
-from magicbot import tunable
+
 
 class Vision:
 
     # field and robot measurements
-    TARGET_HEIGHT = 90 * units.meters_per_inch # 54
-    CAMERA_HEIGHT = 36.75 * units.meters_per_inch # 36.75 
+    TARGET_HEIGHT = 90 * units.meters_per_inch  # 54
+    CAMERA_HEIGHT = 36.75 * units.meters_per_inch  # 36.75
     CAMERA_PITCH = (
         -3.2936549 * units.radians_per_degree
     )  # TODO tune: ty - atan((TARGET_HEIGHT - CAMERA_HEIGHT) / distance)
@@ -47,9 +47,7 @@ class Vision:
 
     def hasTarget(self) -> bool:
         """Has the limelight found a valid target."""
-        return (
-            self.limelight.getNumber("tv", 0) == 1
-        )
+        return self.limelight.getNumber("tv", 0) == 1
 
     def getHeading(self) -> float:
         """Get the yaw offset to the target."""

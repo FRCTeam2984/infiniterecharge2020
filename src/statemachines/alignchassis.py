@@ -146,6 +146,7 @@ class AlignChassis(StateMachine):
         self.nt.putNumber("desired_velocity_right", self.desired_velocity.right)
         self.nt.putNumber("distance_adjust", self.distance_adjust)
         self.nt.putNumber("heading_adjust", self.heading_adjust)
+
     def execute(self):
         super().execute()
         self.updateNetworkTables()
