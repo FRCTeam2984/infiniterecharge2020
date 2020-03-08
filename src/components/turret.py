@@ -5,7 +5,7 @@ from networktables import NetworkTables
 from components import vision
 from controls import pidf
 from utils import lazypigeonimu, lazytalonsrx, units
-
+from magicbot import tunable
 
 class Turret:
 
@@ -29,10 +29,10 @@ class Turret:
     CONTINUOUS_CURRENT = 25
 
     # position pidf gains
-    TURRET_KP = 1
-    TURRET_KI = 0
-    TURRET_KD = 0.01
-    TURRET_KF = 0.08
+    TURRET_KP = 1 # 1
+    TURRET_KI = 0.001 # 0.001
+    TURRET_KD = 0.008 # 0.008
+    TURRET_KF = 0.08 # 0.08
     TURRET_IZONE = 0
 
     HEADING_TOLERANCE = 0.5 * units.radians_per_degree
@@ -78,11 +78,14 @@ class Turret:
         )
 
         self.position_pidf = pidf.PIDF(
-            self.TURRET_KI, self.TURRET_KP, self.TURRET_KD, self.TURRET_KF, True,
+            self.TURRET_KP, self.TURRET_KI, self.TURRET_KD, self.TURRET_KF,
         )
 
     def on_enable(self):
         self.turret_motor.zero()
+        self.position_pidf = pidf.PIDF(
+            self.TURRET_KP, self.TURRET_KI, self.TURRET_KD, self.TURRET_KF,
+        )
 
     def on_disable(self):
         self.stop()
