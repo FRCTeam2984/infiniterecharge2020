@@ -55,6 +55,9 @@ class Robot(MagicRobot):
     def createObjects(self):
         """Initialize all wpilib motors & sensors"""
 
+        # setup camera
+        wpilib.CameraServer.launch()
+
         # setup master and slave drive motors
         self.drive_slave_left = lazytalonfx.LazyTalonFX(self.DRIVE_SLAVE_LEFT_ID)
         self.drive_master_left = lazytalonfx.LazyTalonFX(self.DRIVE_MASTER_LEFT_ID)
