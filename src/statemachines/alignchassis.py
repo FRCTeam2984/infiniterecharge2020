@@ -141,11 +141,13 @@ class AlignChassis(StateMachine):
         self.chassis.stop()
         self.vision.enableLED(False)
 
-    def execute(self):
-        super().execute()
+    def updateNetworkTables(self):
         self.nt.putNumber("desired_velocity_left", self.desired_velocity.left)
         self.nt.putNumber("desired_velocity_right", self.desired_velocity.right)
         self.nt.putNumber("distance_adjust", self.distance_adjust)
         self.nt.putNumber("heading_adjust", self.heading_adjust)
+    def execute(self):
+        super().execute()
+        self.updateNetworkTables()
         if self.is_executing:
             self.vision.enableLED(True)

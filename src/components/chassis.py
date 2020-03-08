@@ -68,7 +68,7 @@ class Chassis:
     JOYSTICK_ROTATION_EXPONENT = 3
     JOYSTICK_THROTTLE_EXPONENT = 3
 
-    JOYSTICK_MAX = 0.3
+    JOYSTICK_MAX = 1.0
 
     # anit tip
     PITCH_TOLERANCE = 10 * units.radians_per_degree
@@ -119,8 +119,6 @@ class Chassis:
         for master in (
             self.drive_master_left,
             self.drive_master_right,
-            self.drive_slave_left,
-            self.drive_slave_right,
         ):
             master.configFactoryDefault()
             master.setStatusFramePeriod(
@@ -204,12 +202,6 @@ class Chassis:
         velocity_r = velocity * self.TRACK_RADIUS
         self.setVelocity(velocity_l, velocity_r)
 
-    def isLevel(self) -> bool:
-        return abs(self.imu.getPitchInRange()) <= self.PITCH_TOLERANCE
-
-    def level(self):
-        output = np.sign(self.imu.getPitchInRange()) * self.PITCH_SPEED
-        self.setOutput(output, output)
 
     def stop(self) -> None:
         """Stop all motor output."""

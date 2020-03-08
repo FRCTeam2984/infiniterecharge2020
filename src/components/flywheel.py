@@ -1,6 +1,5 @@
 import numpy as np
 from networktables import NetworkTables
-
 import rev
 from utils import units
 from wpilib import controller

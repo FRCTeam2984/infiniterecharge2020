@@ -2,12 +2,11 @@
 
 import rev
 import wpilib
-from components import (chassis, flywheel, intake, slider, spinner, tower,
-                        trolley, turret, vision, winch)
+from components import (chassis, flywheel, intake, slider, tower,
+                         turret, vision, winch)
 from magicbot import MagicRobot
-from statemachines import alignchassis, climb, disk, indexer, shooter
+from statemachines import alignchassis, climb, indexer, shooter
 from utils import joysticks, lazypigeonimu, lazytalonfx, lazytalonsrx, units
-
 
 class Robot(MagicRobot):
     DRIVE_SLAVE_LEFT_ID = 1
@@ -40,23 +39,21 @@ class Robot(MagicRobot):
     tower: tower.Tower
     turret: turret.Turret
     flywheel: flywheel.Flywheel
-    spinner: spinner.Spinner
     vision: vision.Vision
     slider: slider.Slider
     winch: winch.Winch
-    trolley: trolley.Trolley
 
     shooter: shooter.Shooter
     turrettracker: shooter.TurretTracker
 
     alignchassis: alignchassis.AlignChassis
     climb: climb.Climb
-    disk: disk.Disk
     indexer: indexer.Indexer
     safeintake: indexer.SafeIntake
 
     def createObjects(self):
         """Initialize all wpilib motors & sensors"""
+
         # setup master and slave drive motors
         self.drive_slave_left = lazytalonfx.LazyTalonFX(self.DRIVE_SLAVE_LEFT_ID)
         self.drive_master_left = lazytalonfx.LazyTalonFX(self.DRIVE_MASTER_LEFT_ID)
@@ -79,14 +76,11 @@ class Robot(MagicRobot):
             self.FLYWHEEL_MOTOR_ID, rev.MotorType.kBrushless
         )
 
-        self.spinner_motor = lazytalonsrx.LazyTalonSRX(self.SPINNER_ID)
-
         self.climb_winch_slave = lazytalonsrx.LazyTalonSRX(self.CLIMB_WINCH_SLAVE_ID)
         self.climb_winch_master = lazytalonsrx.LazyTalonSRX(self.CLIMB_WINCH_MASTER_ID)
         self.climb_winch_slave.follow(self.climb_winch_master)
 
         self.slider_motor = lazytalonsrx.LazyTalonSRX(self.SLIDER_ID)
-        self.trolley_motor = lazytalonsrx.LazyTalonSRX(self.TROLLEY_ID)
 
         # setup imu
         self.imu = lazypigeonimu.LazyPigeonIMU(self.intake_motor)
@@ -100,6 +94,7 @@ class Robot(MagicRobot):
         self.operator = wpilib.XboxController(1)
 
         self.manual_indexer = True
+
 
     def teleopInit(self):
         pass
