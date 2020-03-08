@@ -25,24 +25,17 @@ class Autonomous(AutonomousStateMachine):
     def on_enable(self):
         super().on_enable()
 
-    @timed_state(first=True, duration=0.2, next_state="shootBalls")
-    def move(self):
-        self.chassis.setOutput(-0.1, -0.1)
-
-    # @state(first=True)
-    # def alignChassis(self, initial_call):
-    #     if initial_call:
-    #         pass
-    #     self.alignchassis.engage()
-    #     if self.alignchassis.isAligned():
-    #         self.next_state("shootBalls")
+    @timed_state(first=True, duration=1, next_state="shootBalls")
+    def moveAndAlign(self):
+        self.chassis.setOutput(-0.3, -0.3)
+        self.turrettracker.engage()
 
     @state()
     def shootBalls(self, initial_call):
+        if initial_call:
+            self.chassis.stop()
         self.turrettracker.engage()
         self.shooter.engage()
-        # if self.tower.isEmpty():
-        #     self.done()
 
     def done(self):
         super().done()
