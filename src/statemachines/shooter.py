@@ -68,7 +68,7 @@ class Shooter(StateMachine):
     flywheel: flywheel.Flywheel
     vision: vision.Vision
 
-    VISION_TOLERANCE = 2 * units.radians_per_degree
+    VISION_TOLERANCE = 3 * units.radians_per_degree
 
     def __init__(self):
         self.is_searching_reverse = False
@@ -112,9 +112,10 @@ class Shooter(StateMachine):
         # self.tower.stop(tower.TowerStage.BOTH)
         # self.next_state("spinFlywheel")
 
-        # if abs(self.vision.getHeading()) <= self.VISION_TOLERANCE:
-        self.tower.feed(tower.TowerStage.BOTH)
-        # else:
+        if abs(self.vision.getHeading()) <= self.VISION_TOLERANCE and self.vision.hasTarget():
+            self.tower.feed(tower.TowerStage.BOTH)
+        else:
+            self.tower.stop(tower.TowerStage.BOTH)
 
     def execute(self):
         super().execute()
