@@ -3,9 +3,9 @@ from enum import Enum
 import numpy as np
 from networktables import NetworkTables
 
-from utils import (drivesignal, joysticks, lazypigeonimu, lazytalonfx, units,
-                   wheelstate)
+from utils import drivesignal, joysticks, lazypigeonimu, lazytalonfx, units, wheelstate
 from wpilib import Timer, controller
+from magicbot import tunable
 
 
 class Chassis:
@@ -59,14 +59,16 @@ class Chassis:
 
     # joystick control parameters (https://0x0.st/-TSD)
     JOYSTICK_DEADBAND = 0.025
+    JOYSTICK_SLOW_SCALAR = tunable(0.3)
+    JOYSTICK_FAST_SLOW_ROTATION_SCALAR = tunable(0.4)
 
     JOYSTICK_THROTTLE_SLOW = 0.2
     JOYSTICK_THROTTLE_FAST = 3
     JOYSTICK_ROTATION_SLOW = 0.2
     JOYSTICK_ROTATION_FAST = 3
 
-    JOYSTICK_ROTATION_EXPONENT = 3
-    JOYSTICK_THROTTLE_EXPONENT = 3
+    JOYSTICK_THROTTLE_EXPONENT = tunable(5 / 3)
+    JOYSTICK_ROTATION_EXPONENT = tunable(5 / 3)
 
     JOYSTICK_MAX = 1.0
 
@@ -102,20 +104,20 @@ class Chassis:
         self.heading = 0
         self.nt = NetworkTables.getTable(f"/components/chassis")
 
-        self.throttle_limit = joysticks.Piecewise(
-            self.JOYSTICK_THROTTLE_SLOW, self.JOYSTICK_THROTTLE_FAST
-        )
-        self.rotation_limit = joysticks.Piecewise(
-            self.JOYSTICK_ROTATION_SLOW, self.JOYSTICK_ROTATION_FAST
-        )
+        # self.throttle_limit = joysticks.Piecewise(
+        #     self.JOYSTICK_THROTTLE_SLOW, self.JOYSTICK_THROTTLE_FAST
+        # )
+        # self.rotation_limit = joysticks.Piecewise(
+        #     self.JOYSTICK_ROTATION_SLOW, self.JOYSTICK_ROTATION_FAST
+        # )
 
-        # self.throttle_limit = joysticks.Exponential(self.JOYSTICK_THROTTLE_EXPONENT)
-        # self.rotation_limit = joysticks.Exponential(self.JOYSTICK_ROTATION_EXPONENT)
+
 
     def setup(self):
         self.drive_master_left.setInverted(self.LEFT_INVERTED)
         self.drive_master_right.setInverted(self.RIGHT_INVERTED)
-
+        self.throttle_limit = joysticks.Exponential(self.JOYSTICK_THROTTLE_EXPONENT)
+        self.rotation_limit = joysticks.Exponential(self.JOYSTICK_ROTATION_EXPONENT)
         for master in (
             self.drive_master_left,
             self.drive_master_right,
@@ -173,18 +175,28 @@ class Chassis:
         self.desired_output.left = output_l
         self.desired_output.right = output_r
 
-    def setFromJoystick(self, throttle: float, rotation: float) -> None:
+    def setFromJoystick(
+        self, throttle: float, rotation: float, slow: bool = False
+    ) -> None:
         throttle = joysticks.deadband(
             self.JOYSTICK_DEADBAND, -self.throttle_limit.getValue(throttle)
         )
         rotation = joysticks.deadband(
             self.JOYSTICK_DEADBAND, self.rotation_limit.getValue(rotation)
         )
+        if not slow:
+            rotation *= self.JOYSTICK_FAST_SLOW_ROTATION_SCALAR
 
         output_l = throttle - rotation
         output_r = throttle + rotation
+
+        if slow:
+            output_l *= self.JOYSTICK_SLOW_SCALAR
+            output_r *= self.JOYSTICK_SLOW_SCALAR
+
         output_l = np.clip(output_l, -self.JOYSTICK_MAX, self.JOYSTICK_MAX)
         output_r = np.clip(output_r, -self.JOYSTICK_MAX, self.JOYSTICK_MAX)
+
 
         self.setOutput(output_l, output_r)
 
