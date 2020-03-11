@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
-import rev
 import wpilib
-from components import (chassis, flywheel, intake, slider, tower, turret,
-                        vision, winch)
+
+wpilib.CameraServer.launch()
+
+import rev
+from components import chassis, flywheel, intake, slider, tower, turret, vision, winch
 from magicbot import MagicRobot
 from statemachines import alignchassis, climb, indexer, shooter
 from utils import joysticks, lazypigeonimu, lazytalonfx, lazytalonsrx, units
-
+from networktables import NetworkTables
 
 class Robot(MagicRobot):
     DRIVE_SLAVE_LEFT_ID = 1
@@ -56,7 +58,6 @@ class Robot(MagicRobot):
         """Initialize all wpilib motors & sensors"""
 
         # setup camera
-        wpilib.CameraServer.launch()
 
         # setup master and slave drive motors
         self.drive_slave_left = lazytalonfx.LazyTalonFX(self.DRIVE_SLAVE_LEFT_ID)
@@ -97,7 +98,9 @@ class Robot(MagicRobot):
         self.driver = wpilib.Joystick(0)
         self.operator = wpilib.XboxController(1)
 
+        self.nt = NetworkTables.getTable("robot")
         self.manual_indexer = True
+        self.chassis_slow = False
 
     def teleopInit(self):
         pass
@@ -110,16 +113,12 @@ class Robot(MagicRobot):
             # driver #
             ##########
             # chassis target tracking
-            if self.driver.getRawButtonPressed(1):
-                self.chassis.stop()
-                self.chassis.setBreakMode()
-            elif self.driver.getRawButtonReleased(1):
-                self.chassis.setCoastMode()
+            if self.driver.getRawButtonPressed(5) or self.driver.getRawButtonPressed(6):
+                self.chassis_slow = not self.chassis_slow
 
-            if not self.driver.getRawButton(1):
-                throttle = self.driver.getY()
-                rotation = self.driver.getZ()
-                self.chassis.setFromJoystick(throttle, rotation)
+            throttle = self.driver.getY()
+            rotation = self.driver.getZ()
+            self.chassis.setFromJoystick(throttle, rotation, self.chassis_slow)
 
             ############
             # operator #
@@ -152,6 +151,13 @@ class Robot(MagicRobot):
             if self.operator.getStickButtonPressed(self.HAND_LEFT):
                 self.manual_indexer = not self.manual_indexer
 
+            if self.operator.getPOV() == joysticks.DPad.LEFT:
+                self.turret.setOutput(0.3)
+            elif self.operator.getPOV() == joysticks.DPad.RIGHT:
+                self.turret.setOutput(-0.3)
+            elif not self.turrettracker.is_executing:
+                self.turret.stop()
+
             if self.manual_indexer:
                 # manual indexer
                 if self.operator.getBumper(self.HAND_RIGHT):
@@ -180,9 +186,13 @@ class Robot(MagicRobot):
                     self.winch.unwind()
                 elif not self.climb.is_executing:
                     self.winch.stop()
+            self.updateNetworkTables()
 
         except:
             self.onException()
+
+    def updateNetworkTables(self):
+        self.nt.putBoolean("chassis_slow", self.chassis_slow)
 
 
 if __name__ == "__main__":

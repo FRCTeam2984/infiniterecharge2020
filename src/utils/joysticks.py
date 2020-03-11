@@ -4,6 +4,16 @@ import numpy as np
 def deadband(deadband, signal):
     return 0 if abs(signal) <= deadband else signal
 
+class DPad:
+    UP = 0
+    UP_RIGHT = 45
+    RIGHT = 90
+    DOWN_RIGHT = 135
+    DOWN = 180
+    DOWN_LEFT = 225
+    LEFT = 270
+    UP_LEFT = 315
+
 
 class Piecewise:
     """https://0x0.st/-TSD"""
