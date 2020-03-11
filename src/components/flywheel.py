@@ -15,6 +15,7 @@ class Flywheel:
 
     # motor config
     INVERTED = True
+
     CLOSED_LOOP_RAMP = 0
     OPEN_LOOP_RAMP = 0
 
@@ -73,6 +74,7 @@ class Flywheel:
         self.flywheel_motor.setInverted(self.INVERTED)
         self.flywheel_motor.setOpenLoopRampRate(self.OPEN_LOOP_RAMP)
         self.flywheel_motor.setClosedLoopRampRate(self.CLOSED_LOOP_RAMP)
+        self.flywheel_motor.setSmartCurrentLimit(29)
 
         self.encoder = self.flywheel_motor.getEncoder()
         self.flywheel_pid = self.flywheel_motor.getPIDController()
@@ -85,6 +87,7 @@ class Flywheel:
         self.flywheel_characterization = controller.SimpleMotorFeedforwardMeters(
             self.FLYWHEEL_KS, self.FLYWHEEL_KV, self.FLYWHEEL_KA,
         )
+        # self.flywheel_motor.burnFlash()
 
     def on_enable(self):
         # TODO remove
@@ -107,8 +110,8 @@ class Flywheel:
 
     def setDistance(self, distance):
         """Interpolate the RPM of the flywheel from the distance to the target."""
-        desired_rpm = np.interp(distance, self.DISTANCES, self.RPMS)
-
+        # desired_rpm = np.interp(distance, self.DISTANCES, self.RPMS)
+        desired_rpm = 231.28 * distance + 3817
         self.setRPM(desired_rpm)
 
     def revUp(self) -> None:
