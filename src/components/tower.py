@@ -3,7 +3,7 @@ from networktables import NetworkTables
 
 from utils import lazytalonsrx
 
-
+from magicbot import tunable
 class TowerStage:
     LOW = 0
     HIGH = 1
@@ -13,8 +13,8 @@ class TowerStage:
 class Tower:
 
     # speeds at which to run motors
-    LT_FEED_SPEED = 0.4
-    HT_FEED_SPEED = 0.4
+    LT_FEED_SPEED = 0.6
+    HT_FEED_SPEED = 0.6
 
     LT_INTAKE_SLOW_SPEED = 0.2
     HT_INTAKE_SLOW_SPEED = 0.3

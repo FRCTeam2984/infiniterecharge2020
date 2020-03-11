@@ -12,7 +12,10 @@ class TurretTracker(StateMachine):
     # search config
     SEARCH_MIN = -60 * units.radians_per_degree
     SEARCH_MAX = 60 * units.radians_per_degree
-    SEARCH_SPEED = 0.15
+    SEARCH_SPEED = 0.3
+
+    def __init__(self):
+        self.is_searching_reverse = False
 
     def track(self):
         self.engage()
@@ -70,9 +73,6 @@ class Shooter(StateMachine):
 
     VISION_TOLERANCE = 3 * units.radians_per_degree
 
-    def __init__(self):
-        self.is_searching_reverse = False
-
     def on_disable(self):
         self.done()
 
@@ -106,12 +106,9 @@ class Shooter(StateMachine):
     @state()
     def feedBalls(self, initial_call):
         """Feed balls into the shooter."""
-        # if self.tower.isEmpty():
-        #     self.done()
-        # if not self.flywheel.isReady():
-        # self.tower.stop(tower.TowerStage.BOTH)
-        # self.next_state("spinFlywheel")
-
+        if not self.flywheel.isReady():
+            self.tower.stop(tower.TowerStage.BOTH)
+            self.next_state("spinFlywheel")
         if (
             abs(self.vision.getHeading()) <= self.VISION_TOLERANCE
             and self.vision.hasTarget()
@@ -129,5 +126,5 @@ class Shooter(StateMachine):
         super().done()
         self.tower.stop(tower.TowerStage.BOTH)
         self.turret.stop()
-        self.flywheel.stop()
+        self.flywheel.setRPM(0)
         self.vision.enableLED(False)
