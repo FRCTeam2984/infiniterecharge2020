@@ -2,20 +2,29 @@ import numpy as np
 from networktables import NetworkTables
 
 from utils import rollingaverage, units
+from magicbot import tunable
 
 
 class Vision:
 
     # field and robot measurements
-    TARGET_HEIGHT = 90 * units.meters_per_inch  # 54
-    CAMERA_HEIGHT = 36.75 * units.meters_per_inch  # 36.75
+    TARGET_HEIGHT = 89.75 * units.meters_per_inch
+    TARGET_WIDTH = 30 * units.meters_per_inch
+    CAMERA_HEIGHT = 36.75 * units.meters_per_inch
     CAMERA_PITCH = (
-        -3.2936549 * units.radians_per_degree
+        -0.631578 * units.radians_per_degree
     )  # TODO tune: ty - atan((TARGET_HEIGHT - CAMERA_HEIGHT) / distance)
-    CAMERA_HEADING = -2 * units.radians_per_degree  # TODO tune
+    CAMERA_HEADING = tunable(-2)  # * units.radians_per_degree  # TODO tune
 
     # rolling average config
     ROLLING_WINDOW = 1
+
+    # force LED on
+    FORCE_LED = True
+
+    # fov
+    FOV_X = 59.6 * units.radians_per_degree
+    FOV_Y = 45.7 * units.radians_per_degree
 
     def __init__(self):
         self.limelight = NetworkTables.getTable("limelight")
@@ -29,17 +38,14 @@ class Vision:
         self.pitch_average = rollingaverage.RollingAverage(self.ROLLING_WINDOW)
 
     def on_enable(self):
-        self.heading_average = rollingaverage.RollingAverage(self.ROLLING_WINDOW)
-        self.pitch_average = rollingaverage.RollingAverage(self.ROLLING_WINDOW)
-        self.enableLED(False)
+        pass
 
     def on_disable(self):
         self.enableLED(False)
 
     def enableLED(self, value: bool) -> None:
         """Toggle the limelight LEDs on or off."""
-        mode = 3 if value else 1
-        mode = 3
+        mode = 3 if (value or self.FORCE_LED) else 1
         self.limelight.putNumber("ledMode", mode)
 
     def isLEDEnabled(self) -> bool:
@@ -53,9 +59,9 @@ class Vision:
         """Get the yaw offset to the target."""
         heading = (
             self.limelight.getNumber("tx", 0) * units.radians_per_degree
-            + self.CAMERA_HEADING
+            + self.CAMERA_HEADING * units.radians_per_degree
         )
-        self.heading = self.heading_average.calculate(heading)
+        self.heading = heading  # self.heading_average.calculate(heading)
         return self.heading
 
     def getPitch(self) -> float:
@@ -64,13 +70,25 @@ class Vision:
             self.limelight.getNumber("ty", 0) * units.radians_per_degree
             + self.CAMERA_PITCH
         )
-        self.pitch = self.pitch_average.calculate(pitch)
+        self.pitch = pitch  # self.pitch_average.calculate(pitch)
         return self.pitch
 
     def getDistance(self) -> float:
         """Get the distance offset to the target."""
+        if not self.hasTarget():
+            return np.inf
         distance = (self.TARGET_HEIGHT - self.CAMERA_HEIGHT) / np.tan(self.getPitch())
         return distance
+
+    def getDistanceFromArea(self) -> float:
+        percent_x = self.limelight.getNumber("thor", 0) / 320
+        radians_x = self.FOV_X * percent_x
+        self.nt.putNumber("percent_x",percent_x)
+        self.nt.putNumber("radians_x",radians_x* units.degrees_per_radian)
+        if not self.hasTarget() or radians_x == 0:
+            return np.inf
+        radius = self.TARGET_WIDTH / radians_x
+        return radius
 
     def getArea(self) -> float:
         """Get the distance offset to the target."""
@@ -87,13 +105,11 @@ class Vision:
         self.nt.putNumber("pitch", self.pitch * units.degrees_per_radian)
         self.nt.putNumber("distance", self.getDistance() * units.inches_per_meter)
         self.nt.putNumber(
-            "distance_in_bananas", self.getDistance() * units.bananas_per_meter
+            "distance_from_area", self.getDistanceFromArea() * units.inches_per_meter
         )
         self.nt.putBoolean("has_target", self.hasTarget())
         self.nt.putNumber("area", self.getArea())
         self.nt.putNumber("ratio", self.getRatio())
 
     def execute(self):
-        # self.is_led_enabled = self.limelight.getNumber("ledMode", 0) == 3
-
         self.updateNetworkTables()
