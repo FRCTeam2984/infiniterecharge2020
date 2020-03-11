@@ -3,7 +3,7 @@ from networktables import NetworkTables
 
 from utils import lazytalonsrx
 
-from magicbot import tunable
+
 class TowerStage:
     LOW = 0
     HIGH = 1

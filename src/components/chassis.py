@@ -1,11 +1,12 @@
 from enum import Enum
 
 import numpy as np
-from networktables import NetworkTables
-
-from utils import drivesignal, joysticks, lazypigeonimu, lazytalonfx, units, wheelstate
-from wpilib import Timer, controller
 from magicbot import tunable
+from networktables import NetworkTables
+from wpilib import Timer, controller
+
+from utils import (drivesignal, joysticks, lazypigeonimu, lazytalonfx, units,
+                   wheelstate)
 
 
 class Chassis:
@@ -111,8 +112,6 @@ class Chassis:
         #     self.JOYSTICK_ROTATION_SLOW, self.JOYSTICK_ROTATION_FAST
         # )
 
-
-
     def setup(self):
         self.drive_master_left.setInverted(self.LEFT_INVERTED)
         self.drive_master_right.setInverted(self.RIGHT_INVERTED)
@@ -196,7 +195,6 @@ class Chassis:
 
         output_l = np.clip(output_l, -self.JOYSTICK_MAX, self.JOYSTICK_MAX)
         output_r = np.clip(output_r, -self.JOYSTICK_MAX, self.JOYSTICK_MAX)
-
 
         self.setOutput(output_l, output_r)
 

@@ -1,5 +1,6 @@
-from components import chassis, intake, tower
 from magicbot.state_machine import AutonomousStateMachine, state, timed_state
+
+from components import chassis, flywheel, intake, tower
 from statemachines import alignchassis, indexer, shooter
 
 
@@ -15,6 +16,10 @@ class Autonomous(AutonomousStateMachine):
     tower: tower.Tower
     intake: intake.Intake
     chassis: chassis.Chassis
+    flywheel: flywheel.Flywheel
+
+    BACKUP_SPEED = -0.3
+    BACKUP_DURATION = 1
 
     def __init__(self):
         super().__init__()
@@ -25,9 +30,10 @@ class Autonomous(AutonomousStateMachine):
     def on_enable(self):
         super().on_enable()
 
-    @timed_state(first=True, duration=1, next_state="shootBalls")
+    @timed_state(first=True, duration=BACKUP_DURATION, next_state="shootBalls")
     def moveAndAlign(self):
-        self.chassis.setOutput(-0.3, -0.3)
+        self.chassis.setOutput(-self.BACKUP_SPEED, -self.BACKUP_SPEED)
+        self.flywheel.revUp()
         self.turrettracker.engage()
 
     @state()

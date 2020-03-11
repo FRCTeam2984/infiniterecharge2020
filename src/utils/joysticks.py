@@ -4,6 +4,7 @@ import numpy as np
 def deadband(deadband, signal):
     return 0 if abs(signal) <= deadband else signal
 
+
 class DPad:
     UP = 0
     UP_RIGHT = 45

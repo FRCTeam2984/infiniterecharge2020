@@ -1,9 +1,9 @@
 import numpy as np
-from networktables import NetworkTables
-
 import rev
-from utils import units
+from networktables import NetworkTables
 from wpilib import controller
+
+from utils import units
 
 
 class Flywheel:
@@ -18,6 +18,8 @@ class Flywheel:
 
     CLOSED_LOOP_RAMP = 0
     OPEN_LOOP_RAMP = 0
+
+    CURRENT_LIMIT = 29
 
     # motor coefs
     # TODO remove ka?
@@ -58,6 +60,9 @@ class Flywheel:
     )
     # ACCURACY = (1, 1, 1, 1, 0.75, 0.75, 0.75, 0.5, 0.5, 0.5)
 
+    SLOPE = 231.28
+    INTERCEPT = 3817
+
     REV_RPM = 5000
 
     # required devices
@@ -74,7 +79,7 @@ class Flywheel:
         self.flywheel_motor.setInverted(self.INVERTED)
         self.flywheel_motor.setOpenLoopRampRate(self.OPEN_LOOP_RAMP)
         self.flywheel_motor.setClosedLoopRampRate(self.CLOSED_LOOP_RAMP)
-        self.flywheel_motor.setSmartCurrentLimit(29)
+        self.flywheel_motor.setSmartCurrentLimit(self.CURRENT_LIMIT)
 
         self.encoder = self.flywheel_motor.getEncoder()
         self.flywheel_pid = self.flywheel_motor.getPIDController()
@@ -111,7 +116,7 @@ class Flywheel:
     def setDistance(self, distance):
         """Interpolate the RPM of the flywheel from the distance to the target."""
         # desired_rpm = np.interp(distance, self.DISTANCES, self.RPMS)
-        desired_rpm = 231.28 * distance + 3817
+        desired_rpm = self.SLOPE * distance + self.INTERCEPT
         self.setRPM(desired_rpm)
 
     def revUp(self) -> None:

@@ -1,8 +1,8 @@
 import numpy as np
+from magicbot import tunable
 from networktables import NetworkTables
 
 from utils import rollingaverage, units
-from magicbot import tunable
 
 
 class Vision:
@@ -83,8 +83,8 @@ class Vision:
     def getDistanceFromArea(self) -> float:
         percent_x = self.limelight.getNumber("thor", 0) / 320
         radians_x = self.FOV_X * percent_x
-        self.nt.putNumber("percent_x",percent_x)
-        self.nt.putNumber("radians_x",radians_x* units.degrees_per_radian)
+        self.nt.putNumber("percent_x", percent_x)
+        self.nt.putNumber("radians_x", radians_x * units.degrees_per_radian)
         if not self.hasTarget() or radians_x == 0:
             return np.inf
         radius = self.TARGET_WIDTH / radians_x

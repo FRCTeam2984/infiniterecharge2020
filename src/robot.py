@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 
+import rev
 import wpilib
+from magicbot import MagicRobot
+from networktables import NetworkTables
+
+from components import (chassis, flywheel, intake, slider, tower, turret,
+                        vision, winch)
+from statemachines import alignchassis, climb, indexer, shooter
+from utils import joysticks, lazypigeonimu, lazytalonfx, lazytalonsrx, units
 
 wpilib.CameraServer.launch()
 
-import rev
-from components import chassis, flywheel, intake, slider, tower, turret, vision, winch
-from magicbot import MagicRobot
-from statemachines import alignchassis, climb, indexer, shooter
-from utils import joysticks, lazypigeonimu, lazytalonfx, lazytalonsrx, units
-from networktables import NetworkTables
+
 
 class Robot(MagicRobot):
     DRIVE_SLAVE_LEFT_ID = 1
