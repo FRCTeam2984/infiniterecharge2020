@@ -1,13 +1,12 @@
 from enum import Enum
 
+import numpy as np
+from magicbot import tunable
 from networktables import NetworkTables
 
 from components import vision
 from controls import pidf
 from utils import lazypigeonimu, lazytalonsrx, units
-
-import numpy as np
-from magicbot import tunable
 
 
 class Turret:

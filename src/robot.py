@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
-import wpilib
 import rev
-wpilib.CameraServer.launch()
+import wpilib
 from magicbot import MagicRobot
 from networktables import NetworkTables
 
@@ -11,6 +10,7 @@ from components import (chassis, flywheel, intake, slider, tower, turret,
 from statemachines import alignchassis, climb, indexer, shooter
 from utils import joysticks, lazypigeonimu, lazytalonfx, lazytalonsrx, units
 
+wpilib.CameraServer.launch()
 
 
 
