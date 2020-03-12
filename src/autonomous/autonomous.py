@@ -19,7 +19,7 @@ class Autonomous(AutonomousStateMachine):
     flywheel: flywheel.Flywheel
 
     BACKUP_SPEED = -0.3
-    BACKUP_DURATION = 1
+    BACKUP_DURATION = 0.75
 
     def __init__(self):
         super().__init__()
@@ -32,7 +32,7 @@ class Autonomous(AutonomousStateMachine):
 
     @timed_state(first=True, duration=BACKUP_DURATION, next_state="shootBalls")
     def moveAndAlign(self):
-        self.chassis.setOutput(-self.BACKUP_SPEED, -self.BACKUP_SPEED)
+        self.chassis.setOutput(self.BACKUP_SPEED, self.BACKUP_SPEED)
         self.flywheel.revUp()
         self.turrettracker.engage()
 
