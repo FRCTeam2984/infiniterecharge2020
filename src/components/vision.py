@@ -12,7 +12,7 @@ class Vision:
     TARGET_WIDTH = 30 * units.meters_per_inch
     CAMERA_HEIGHT = 36.75 * units.meters_per_inch
     CAMERA_PITCH = (
-        -0.631578 * units.radians_per_degree
+        -1.5311254 * units.radians_per_degree
     )  # TODO tune: ty - atan((TARGET_HEIGHT - CAMERA_HEIGHT) / distance)
     CAMERA_HEADING = tunable(-2)  # * units.radians_per_degree  # TODO tune
 
@@ -103,7 +103,9 @@ class Vision:
         """Update network table values related to component."""
         self.nt.putNumber("heading", self.heading * units.degrees_per_radian)
         self.nt.putNumber("pitch", self.pitch * units.degrees_per_radian)
+        self.nt.putNumber("distance_feet", self.getDistance() * units.feet_per_meter)
         self.nt.putNumber("distance", self.getDistance() * units.inches_per_meter)
+
         self.nt.putNumber(
             "distance_from_area", self.getDistanceFromArea() * units.inches_per_meter
         )
