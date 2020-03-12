@@ -36,7 +36,7 @@ class Flywheel:
     FLYWHEEL_IZONE = 0
 
     # percent of setpoint
-    RPM_TOLERANCE = 0.18
+    RPM_TOLERANCE = 0.05
 
     DISTANCES = (
         np.array((10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 24, 27, 30, 32))
@@ -58,7 +58,6 @@ class Flywheel:
         5900,  # 30
         6200,  # 32
     )
-    # ACCURACY = (1, 1, 1, 1, 0.75, 0.75, 0.75, 0.5, 0.5, 0.5)
 
     SLOPE = 231.28
     INTERCEPT = 3817
@@ -115,8 +114,7 @@ class Flywheel:
 
     def setDistance(self, distance):
         """Interpolate the RPM of the flywheel from the distance to the target."""
-        # desired_rpm = np.interp(distance, self.DISTANCES, self.RPMS)
-        desired_rpm = self.SLOPE * distance + self.INTERCEPT
+        desired_rpm = np.interp(distance, self.DISTANCES, self.RPMS)
         self.setRPM(desired_rpm)
 
     def revUp(self) -> None:
@@ -177,5 +175,4 @@ class Flywheel:
         else:
             # stop the flywheel
             self.flywheel_motor.stopMotor()
-
         self.updateNetworkTables()
