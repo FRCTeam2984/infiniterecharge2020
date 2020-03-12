@@ -13,8 +13,8 @@ class TowerStage:
 class Tower:
 
     # speeds at which to run motors
-    LT_FEED_SPEED = 0.6
-    HT_FEED_SPEED = 0.6
+    LT_FEED_SPEED = 0.3
+    HT_FEED_SPEED = 0.3
 
     LT_INTAKE_SLOW_SPEED = 0.2
     HT_INTAKE_SLOW_SPEED = 0.3
