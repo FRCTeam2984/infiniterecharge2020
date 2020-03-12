@@ -6,6 +6,9 @@ from components import vision
 from controls import pidf
 from utils import lazypigeonimu, lazytalonsrx, units
 
+import numpy as np
+from magicbot import tunable
+
 
 class Turret:
 
@@ -30,10 +33,13 @@ class Turret:
 
     # position pidf gains
     TURRET_KP = 1  # 1
-    TURRET_KI = 0.001  # 0.001
+    TURRET_KI = 0  # 0.001
     TURRET_KD = 0.008  # 0.008
-    TURRET_KF = 0.08  # 0.08
+    TURRET_KF = 0  # 0.08
     TURRET_IZONE = 0
+
+    TURRET_KS = tunable(0.05)
+    TURRET_FF_TOLERANCE = 1 * units.degrees_per_radian
 
     HEADING_TOLERANCE = 0.5 * units.radians_per_degree
 
@@ -61,6 +67,7 @@ class Turret:
             self.STATUS_FRAME,
             self.TIMEOUT,
         )
+
         self.turret_motor.setBrakeMode()
         self.turret_motor.setSoftMin(self.SOFT_MIN)
         self.turret_motor.setSoftMax(self.SOFT_MAX)
@@ -150,5 +157,14 @@ class Turret:
             self.turret_motor.setOutput(self.desired_output)
         elif self.mode == self._Mode.Heading:
             self.desired_output = self.position_pidf.update(self.getHeading(), 0.02)
+
+            feedforward = self.TURRET_KS * np.sign(self.desired_output)
+            self.desired_output += (
+                0
+                if abs(self.desired_heading - self.getHeading())
+                <= self.TURRET_FF_TOLERANCE
+                else feedforward
+            )
+
             self.turret_motor.setOutput(self.desired_output)
         self.updateNetworkTables()

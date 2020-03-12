@@ -71,7 +71,7 @@ class Shooter(StateMachine):
     flywheel: flywheel.Flywheel
     vision: vision.Vision
 
-    VISION_TOLERANCE = 3 * units.radians_per_degree
+    VISION_TOLERANCE = 1.5 * units.radians_per_degree
 
     def on_disable(self):
         self.done()
