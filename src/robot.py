@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-import rev
 import wpilib
+import rev
+wpilib.CameraServer.launch()
 from magicbot import MagicRobot
 from networktables import NetworkTables
 
@@ -10,7 +11,6 @@ from components import (chassis, flywheel, intake, slider, tower, turret,
 from statemachines import alignchassis, climb, indexer, shooter
 from utils import joysticks, lazypigeonimu, lazytalonfx, lazytalonsrx, units
 
-wpilib.CameraServer.launch()
 
 
 
@@ -116,7 +116,7 @@ class Robot(MagicRobot):
             # driver #
             ##########
             # chassis target tracking
-            if self.driver.getRawButtonPressed(5) or self.driver.getRawButtonPressed(6):
+            if self.driver.getRawButtonPressed(6):
                 self.chassis_slow = not self.chassis_slow
 
             throttle = self.driver.getY()
@@ -132,7 +132,7 @@ class Robot(MagicRobot):
                     if not self.flywheel.is_spinning:
                         self.flywheel.revUp()
                     else:
-                        self.flywheel.stop()
+                        self.flywheel.setRPM(0)
 
             # shooter
             if self.operator.getXButton():
