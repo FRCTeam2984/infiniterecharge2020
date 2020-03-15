@@ -1,64 +1,315 @@
-import logging
-import wpilib
-import ctre
 from enum import Enum
-from utils import lazytalonsrx, lazypigeonimu
+
+import numpy as np
+from magicbot import tunable
+from networktables import NetworkTables
+from wpilib import Timer, controller
+
+from utils import (drivesignal, joysticks, lazypigeonimu, lazytalonfx, units,
+                   wheelstate)
 
 
 class Chassis:
 
-    dm_l: lazytalonsrx.LazyTalonSRX
-    dm_r: lazytalonsrx.LazyTalonSRX
-    gyro: lazypigeonimu.LazyPigeonIMU
+    # chassis physical constants
+    TRACK_WIDTH = 24 * units.meters_per_inch
+    TRACK_RADIUS = TRACK_WIDTH / 2
+
+    WHEEL_DIAMETER = 6 * units.meters_per_inch
+    WHEEL_RADIUS = WHEEL_DIAMETER / 2
+    WHEEL_CIRCUMFERENCE = 2 * np.pi * WHEEL_RADIUS
+    GEAR_RATIO = (48 / 14) * (50 / 16)  # 10.7142861
+
+    # conversions
+    RADIANS_PER_METER = (np.pi * 2 * GEAR_RATIO) / WHEEL_CIRCUMFERENCE  # rad / m
+    METERS_PER_RADIAN = WHEEL_CIRCUMFERENCE / (np.pi * 2 * GEAR_RATIO)  # m / rad
+
+    # motor config
+    TIMEOUT = lazytalonfx.LazyTalonFX.TIMEOUT
+    LEFT_INVERTED = True
+    RIGHT_INVERTED = False
+    STATUS_FRAME = 10
+
+    CLOSED_LOOP_RAMP = 0.5
+    OPEN_LOOP_RAMP = 0.5
+
+    # TODO tune current limtis
+    STATOR_CURRENT = 50
+    STATOR_TRIGGER = 50
+    STATOR_TIME = 1
+
+    SUPPLY_CURRENT = 50
+    SUPPLY_TRIGGER = 60
+    SUPPLY_TIME = 1
+
+    # motor coefs
+    DRIVE_KS = 0.149  # V
+    DRIVE_KV = 2.4  # V / (m / s)
+    DRIVE_KA = 0.234  # V / (m / s^2)
+
+    # velocity pidf gains
+    VELOCITY_LEFT_KP = 0.000363  # LQR = 0.000363
+    VELOCITY_LEFT_KI = 0
+    VELOCITY_LEFT_KD = 0
+    VELOCITY_LEFT_KF = 0
+
+    VELOCITY_RIGHT_KP = 0.000363  # LQR = 0.000363
+    VELOCITY_RIGHT_KI = 0
+    VELOCITY_RIGHT_KD = 0
+    VELOCITY_RIGHT_KF = 0
+
+    # joystick control parameters (https://0x0.st/-TSD)
+    JOYSTICK_DEADBAND = 0.025
+    JOYSTICK_SLOW_SCALAR = tunable(0.3)
+    JOYSTICK_FAST_SLOW_ROTATION_SCALAR = tunable(0.4)
+
+    JOYSTICK_THROTTLE_SLOW = 0.2
+    JOYSTICK_THROTTLE_FAST = 3
+    JOYSTICK_ROTATION_SLOW = 0.2
+    JOYSTICK_ROTATION_FAST = 3
+
+    JOYSTICK_THROTTLE_EXPONENT = tunable(5 / 3)
+    JOYSTICK_ROTATION_EXPONENT = tunable(5 / 3)
+
+    JOYSTICK_MAX = 1.0
+
+    # anit tip
+    PITCH_TOLERANCE = 10 * units.radians_per_degree
+    PITCH_SPEED = 0.5
+
+    # required components
+
+    # required devices
+    drive_master_left: lazytalonfx.LazyTalonFX
+    drive_master_right: lazytalonfx.LazyTalonFX
+    drive_slave_left: lazytalonfx.LazyTalonFX
+    drive_slave_right: lazytalonfx.LazyTalonFX
+
+    imu: lazypigeonimu.LazyPigeonIMU
 
     class _Mode(Enum):
-        Nil = 0
+        Idle = 0
         PercentOutput = 1
+        Velocity = 2
 
     def __init__(self):
-        self.signal_l = 0
-        self.signal_r = 0
-        self.mode = self._Mode.Nil
+        self.mode = self._Mode.Idle
+        self.desired_output = drivesignal.DriveSignal()
+        self.desired_velocity = drivesignal.DriveSignal()
+        self.desired_acceleration = drivesignal.DriveSignal()
+        self.feedforward = drivesignal.DriveSignal()
+        self.prev_time = 0
+        self.wheel_position = wheelstate.WheelState()
+        self.prev_wheel_position = wheelstate.WheelState()
+        self.wheel_velocity = wheelstate.WheelState()
+        self.heading = 0
+        self.nt = NetworkTables.getTable(f"/components/chassis")
+
+        # self.throttle_limit = joysticks.Piecewise(
+        #     self.JOYSTICK_THROTTLE_SLOW, self.JOYSTICK_THROTTLE_FAST
+        # )
+        # self.rotation_limit = joysticks.Piecewise(
+        #     self.JOYSTICK_ROTATION_SLOW, self.JOYSTICK_ROTATION_FAST
+        # )
+
+    def setup(self):
+        self.drive_master_left.setInverted(self.LEFT_INVERTED)
+        self.drive_master_right.setInverted(self.RIGHT_INVERTED)
+        self.throttle_limit = joysticks.Exponential(self.JOYSTICK_THROTTLE_EXPONENT)
+        self.rotation_limit = joysticks.Exponential(self.JOYSTICK_ROTATION_EXPONENT)
+        for master in (
+            self.drive_master_left,
+            self.drive_master_right,
+        ):
+            master.configFactoryDefault()
+            master.setStatusFramePeriod(
+                lazytalonfx.LazyTalonFX.StatusFrame.Status_2_Feedback0,
+                self.STATUS_FRAME,
+                self.TIMEOUT,
+            )
+            master.configOpenloopRamp(self.OPEN_LOOP_RAMP, self.TIMEOUT)
+            master.configClosedloopRamp(self.CLOSED_LOOP_RAMP, self.TIMEOUT)
+
+            # master.setStatorCurrentLimit(
+            #     self.STATOR_CURRENT, self.STATOR_TRIGGER, self.STATOR_TIME
+            # )
+            # master.setSupplyCurrentLimit(
+            #     self.SUPPLY_CURRENT, self.SUPPLY_TRIGGER, self.SUPPLY_TIME
+            # )
+
+        # drive motor characterizations
+        self.drive_characterization_left = controller.SimpleMotorFeedforwardMeters(
+            self.DRIVE_KS, self.DRIVE_KV, self.DRIVE_KA,
+        )
+        self.drive_characterization_right = controller.SimpleMotorFeedforwardMeters(
+            self.DRIVE_KS, self.DRIVE_KV, self.DRIVE_KA,
+        )
+
+        self.drive_master_left.setPIDF(
+            0,
+            self.VELOCITY_LEFT_KP,
+            self.VELOCITY_LEFT_KI,
+            self.VELOCITY_LEFT_KD,
+            self.VELOCITY_LEFT_KF,
+        )
+        self.drive_master_right.setPIDF(
+            0,
+            self.VELOCITY_RIGHT_KP,
+            self.VELOCITY_RIGHT_KI,
+            self.VELOCITY_RIGHT_KD,
+            self.VELOCITY_RIGHT_KF,
+        )
 
     def on_enable(self):
         pass
 
-    def checkErrors(self) -> bool:
-        """Check and log any errors regarding the component. Returns true if the error is significant enough to warrant a cease of all operations."""
-        status = False
-        if False:  # dm_l is not connected:
-            logging.error(f"{self.dm_l.name} is not connected.")
-            status = True
-        if False:  # dm_r is not connected:
-            logging.error(f"{self.dm_r.name} is not connected.")
-            status = True
-        if False:  # dm_l current draw is too high:
-            logging.error(f"{self.dm_l.name} is drawing too much current.")
-            status = True
-        if False:  # dm_r current draw is too high:
-            logging.error(f"{self.dm_r.name} is drawing too much current.")
-            status = True
-        return status
-
-    def setFromJoystick(self, throttle, rotation) -> None:
-        """Set the output of the motors from joystick values."""
-        output_l = throttle - rotation
-        output_r = throttle + rotation
-        self.setOutput(output_l, output_r)
+    def on_disable(self):
+        self.stop()
 
     def setOutput(self, output_l: float, output_r: float) -> None:
-        """Set the output of the motors from percent values."""
+        """Set the output of the motors."""
         self.mode = self._Mode.PercentOutput
-        self.signal_l = output_l
-        self.signal_r = output_r
+        self.drive_master_left.setCoastMode()
+        self.drive_master_right.setCoastMode()
+        self.desired_output.left = output_l
+        self.desired_output.right = output_r
+
+    def setFromJoystick(
+        self, throttle: float, rotation: float, slow: bool = False
+    ) -> None:
+        throttle = joysticks.deadband(
+            self.JOYSTICK_DEADBAND, -self.throttle_limit.getValue(throttle)
+        )
+        rotation = joysticks.deadband(
+            self.JOYSTICK_DEADBAND, self.rotation_limit.getValue(rotation)
+        )
+        if not slow:
+            rotation *= self.JOYSTICK_FAST_SLOW_ROTATION_SCALAR
+
+        output_l = throttle - rotation
+        output_r = throttle + rotation
+
+        if slow:
+            output_l *= self.JOYSTICK_SLOW_SCALAR
+            output_r *= self.JOYSTICK_SLOW_SCALAR
+
+        output_l = np.clip(output_l, -self.JOYSTICK_MAX, self.JOYSTICK_MAX)
+        output_r = np.clip(output_r, -self.JOYSTICK_MAX, self.JOYSTICK_MAX)
+
+        self.setOutput(output_l, output_r)
+
+    def setVelocity(self, velocity_l: float, velocity_r: float) -> None:
+        """Set the velocity of the motors in m/s."""
+        self.mode = self._Mode.Velocity
+        self.drive_master_left.setCoastMode()
+        self.drive_master_right.setCoastMode()
+        self.desired_velocity.left = velocity_l
+        self.desired_velocity.right = velocity_r
+
+    def setRotationalVelocity(self, velocity: float) -> None:
+        """Set the rotational velocity of the chassis in rad/s."""
+        velocity_l = -velocity * self.TRACK_RADIUS
+        velocity_r = velocity * self.TRACK_RADIUS
+        self.setVelocity(velocity_l, velocity_r)
+
+    def stop(self) -> None:
+        """Stop all motor output."""
+        self.mode = self._Mode.Idle
+
+    def setBrakeMode(self) -> None:
+        """Set the motors to brake mode."""
+        self.drive_master_left.setBrakeMode()
+        self.drive_master_right.setBrakeMode()
+
+    def setCoastMode(self) -> None:
+        """Set the motors to coast mode."""
+        self.drive_master_left.setCoastMode()
+        self.drive_master_right.setCoastMode()
+
+    def updateNetworkTables(self):
+        """Update network table values related to component."""
+        self.nt.putNumber("wheel_position_left", self.wheel_position.left)
+        self.nt.putNumber("wheel_position_right", self.wheel_position.right)
+        self.nt.putNumber("wheel_velocity_left", self.wheel_velocity.left)
+        self.nt.putNumber("wheel_velocity_right", self.wheel_velocity.right)
+        self.nt.putNumber("desired_output_left", self.desired_output.left)
+        self.nt.putNumber("desired_output_right", self.desired_output.right)
+        self.nt.putNumber("desired_velocity_left", self.desired_velocity.left)
+        self.nt.putNumber("desired_velocity_right", self.desired_velocity.right)
+        self.nt.putNumber(
+            "error_velocity_left", self.desired_velocity.left - self.wheel_velocity.left
+        )
+        self.nt.putNumber(
+            "error_velocity_right",
+            self.desired_velocity.right - self.wheel_velocity.right,
+        )
+        self.nt.putNumber("feedforward_left", self.feedforward.left)
+        self.nt.putNumber("feedforward_right", self.feedforward.right)
+        self.nt.putNumber("heading", self.heading * units.degrees_per_radian)
 
     def execute(self):
-        if self.checkErrors():
-            logging.error(
-                "Chassis has encountered a significant error, ceasing all operations."
+        cur_time = Timer.getFPGATimestamp()
+        # dt = cur_time - self.prev_time
+        dt = 0.02
+
+        self.wheel_position.left = (
+            self.drive_master_left.getPosition() * self.METERS_PER_RADIAN
+        )
+        self.wheel_position.right = (
+            self.drive_master_right.getPosition() * self.METERS_PER_RADIAN
+        )
+
+        self.wheel_velocity.left = (
+            self.wheel_position.left - self.prev_wheel_position.left
+        ) / dt
+        self.wheel_velocity.right = (
+            self.wheel_position.right - self.prev_wheel_position.right
+        ) / dt
+
+        self.heading = self.imu.getHeadingInRange()
+
+        if self.mode == self._Mode.Idle:
+            # stop the motors
+            self.drive_master_left.setOutput(0.0)
+            self.drive_master_right.setOutput(0.0)
+        elif self.mode == self._Mode.PercentOutput:
+            # set the output of the motors
+            self.drive_master_left.setOutput(self.desired_output.left)
+            self.drive_master_right.setOutput(self.desired_output.right)
+        elif self.mode == self._Mode.Velocity:
+            # set the velocity of the motors
+            self.desired_acceleration.left = (
+                self.desired_velocity.left - self.wheel_velocity.left
+            ) / dt
+            self.desired_acceleration.right = (
+                self.desired_velocity.right - self.wheel_velocity.right
+            ) / dt
+
+            self.feedforward.left = (
+                self.drive_characterization_left.calculate(
+                    self.desired_velocity.left, self.desired_acceleration.left
+                )
+                / 12
             )
-            return
-        logging.info(f"{self.gyro.getYaw()} and {self.gyro.getYawInRange()}")
-        if self.mode == self._Mode.PercentOutput:
-            self.dm_l.setOutput(self.signal_l)
-            self.dm_r.setOutput(self.signal_r)
+            self.feedforward.right = (
+                self.drive_characterization_right.calculate(
+                    self.desired_velocity.right, self.desired_acceleration.right
+                )
+                / 12
+            )
+
+            self.drive_master_left.setVelocity(
+                self.desired_velocity.left * self.RADIANS_PER_METER,
+                self.feedforward.left,
+            )
+            self.drive_master_right.setVelocity(
+                self.desired_velocity.right * self.RADIANS_PER_METER,
+                self.feedforward.right,
+            )
+
+        self.prev_time = cur_time
+
+        self.prev_wheel_position.left = self.wheel_position.left
+        self.prev_wheel_position.right = self.wheel_position.right
+
+        self.updateNetworkTables()
